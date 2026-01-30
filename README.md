@@ -60,7 +60,7 @@ SUPABASE_ANON_KEY=dein_anon_key
 # Frontend benötigt diese auch mit VITE_ Prefix:
 VITE_SUPABASE_URL=https://dein-projekt.supabase.co
 VITE_SUPABASE_ANON_KEY=dein_anon_key
-VITE_API_URL=http://localhost:3001/api
+VITE_API_URL=/api
 
 ```
 
