@@ -1,0 +1,225 @@
+import { useState, useEffect, useCallback } from 'react';
+import Header from './components/Header';
+import SummaryCards from './components/SummaryCards';
+import BudgetTable from './components/BudgetTable';
+import {
+    getValuesByYear,
+    getSummary,
+    updateValue,
+    createCategory,
+    updateCategory,
+    deleteCategory
+} from './api/budgetApi';
+import { AlertCircle, RefreshCw } from 'lucide-react';
+
+function App() {
+    const [year, setYear] = useState(new Date().getFullYear());
+    const [data, setData] = useState([]);
+    const [summary, setSummary] = useState(null);
+    const [editMode, setEditMode] = useState(false);
+    const [pendingChanges, setPendingChanges] = useState({});
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [saving, setSaving] = useState(false);
+
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const [valuesData, summaryData] = await Promise.all([
+                getValuesByYear(year),
+                getSummary(year),
+            ]);
+            setData(valuesData);
+            setSummary(summaryData);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            setError('Fehler beim Laden der Daten. Bitte überprüfen Sie die Verbindung zum Server.');
+        } finally {
+            setLoading(false);
+        }
+    }, [year]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const handleYearChange = (newYear) => {
+        if (Object.keys(pendingChanges).length > 0) {
+            if (!confirm('Sie haben ungespeicherte Änderungen. Möchten Sie fortfahren?')) {
+                return;
+            }
+        }
+        setPendingChanges({});
+        setEditMode(false);
+        setYear(newYear);
+    };
+
+    const handleValueChange = (categoryId, month, amount) => {
+        const key = `${categoryId}-${month}`;
+        setPendingChanges(prev => ({
+            ...prev,
+            [key]: { category_id: categoryId, year, month, amount }
+        }));
+
+        // Also update local data for immediate feedback
+        setData(prevData =>
+            prevData.map(category => {
+                if (category.category_id !== categoryId) return category;
+
+                const existingMonth = category.monthly_values?.find(mv => mv.month === month);
+                if (existingMonth) {
+                    return {
+                        ...category,
+                        monthly_values: category.monthly_values.map(mv =>
+                            mv.month === month ? { ...mv, amount } : mv
+                        )
+                    };
+                } else {
+                    return {
+                        ...category,
+                        monthly_values: [...(category.monthly_values || []), { month, amount }]
+                    };
+                }
+            })
+        );
+    };
+
+    const handleSave = async () => {
+        if (Object.keys(pendingChanges).length === 0) return;
+
+        setSaving(true);
+        try {
+            const updates = Object.values(pendingChanges);
+
+            // Save all changes
+            for (const update of updates) {
+                await updateValue(update.category_id, update.year, update.month, update.amount);
+            }
+
+            // Refresh data and summary
+            await fetchData();
+            setPendingChanges({});
+            setEditMode(false);
+        } catch (err) {
+            console.error('Error saving changes:', err);
+            setError('Fehler beim Speichern. Bitte versuchen Sie es erneut.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCancel = () => {
+        if (Object.keys(pendingChanges).length > 0) {
+            if (!confirm('Alle ungespeicherten Änderungen werden verworfen. Fortfahren?')) {
+                return;
+            }
+        }
+        setPendingChanges({});
+        setEditMode(false);
+        fetchData(); // Reload original data
+    };
+
+    const handleEditModeToggle = () => {
+        setEditMode(true);
+    };
+
+    // Category management handlers
+    const handleAddCategory = async (categoryData) => {
+        setSaving(true);
+        try {
+            await createCategory(categoryData);
+            await fetchData();
+        } catch (err) {
+            console.error('Error adding category:', err);
+            setError('Fehler beim Hinzufügen der Kategorie.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleUpdateCategory = async (categoryId, categoryData) => {
+        setSaving(true);
+        try {
+            await updateCategory(categoryId, categoryData);
+            await fetchData();
+        } catch (err) {
+            console.error('Error updating category:', err);
+            setError('Fehler beim Aktualisieren der Kategorie.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDeleteCategory = async (categoryId) => {
+        setSaving(true);
+        try {
+            await deleteCategory(categoryId);
+            await fetchData();
+        } catch (err) {
+            console.error('Error deleting category:', err);
+            setError('Fehler beim Löschen der Kategorie.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-4 md:p-6 lg:p-8">
+            <div className="max-w-[1800px] mx-auto">
+                <Header
+                    year={year}
+                    onYearChange={handleYearChange}
+                    editMode={editMode}
+                    onEditModeToggle={handleEditModeToggle}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    hasChanges={Object.keys(pendingChanges).length > 0}
+                    loading={loading || saving}
+                />
+
+                {error && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700">
+                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                        <span>{error}</span>
+                        <button
+                            onClick={fetchData}
+                            className="ml-auto flex items-center gap-2 px-3 py-1 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                            Erneut versuchen
+                        </button>
+                    </div>
+                )}
+
+                <SummaryCards summary={summary} loading={loading} />
+
+                <BudgetTable
+                    data={data}
+                    summary={summary}
+                    editMode={editMode}
+                    onChange={handleValueChange}
+                    loading={loading}
+                    year={year}
+                    onAddCategory={handleAddCategory}
+                    onUpdateCategory={handleUpdateCategory}
+                    onDeleteCategory={handleDeleteCategory}
+                />
+
+                {/* Footer Info */}
+                <div className="mt-6 text-center text-sm text-slate-400">
+                    <p>
+                        {editMode && Object.keys(pendingChanges).length > 0 && (
+                            <span className="text-amber-600 font-medium">
+                                {Object.keys(pendingChanges).length} ungespeicherte Änderung(en) •{' '}
+                            </span>
+                        )}
+                        Haushaltsplan {year} • Daten werden in PostgreSQL gespeichert
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default App;

@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100 rounded-lg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-lg hover:bg-slate-400;
+}
+
+/* Table cell input styling */
+.value-input {
+  @apply w-full bg-transparent text-right px-2 py-1 
+         border border-transparent rounded
+         focus:border-blue-500 focus:bg-white focus:outline-none
+         transition-colors;
+}
+
+.value-input:hover {
+  @apply bg-slate-50;
+}
+
+/* Glassmorphism effect */
+.glass {
+  @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
+}
+
+/* Smooth transitions */
+.smooth-transition {
+  @apply transition-all duration-200 ease-in-out;
+}

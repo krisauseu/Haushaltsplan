@@ -1,0 +1,493 @@
+import { useState, useEffect, useCallback } from 'react';
+import { Loader2, Pencil, Trash2, Plus, Check, X } from 'lucide-react';
+import ConfirmDialog from './ConfirmDialog';
+
+const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+export default function BudgetTable({
+    data,
+    summary,
+    editMode,
+    onChange,
+    loading,
+    year,
+    onAddCategory,
+    onUpdateCategory,
+    onDeleteCategory
+}) {
+    const [editingCategory, setEditingCategory] = useState(null);
+    const [editingName, setEditingName] = useState('');
+    const [addingToSection, setAddingToSection] = useState(null);
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+    const formatCurrency = (value, showZero = false) => {
+        if (!showZero && (value === 0 || value === null || value === undefined)) {
+            return '-';
+        }
+        return new Intl.NumberFormat('de-DE', {
+            style: 'currency',
+            currency: 'EUR',
+        }).format(value || 0);
+    };
+
+    const parseCurrency = (value) => {
+        if (!value || value === '-') return 0;
+        // Remove currency symbols and spaces, replace comma with dot
+        const cleaned = value.toString()
+            .replace(/[€\s]/g, '')
+            .replace(/\./g, '')
+            .replace(',', '.');
+        return parseFloat(cleaned) || 0;
+    };
+
+    const getValueForMonth = (category, month) => {
+        const monthData = category.monthly_values?.find(mv => mv.month === month);
+        return monthData?.amount || 0;
+    };
+
+    const getCategoryYearlyTotal = (category) => {
+        if (!category.monthly_values) return 0;
+        return category.monthly_values.reduce((sum, mv) => sum + parseFloat(mv.amount || 0), 0);
+    };
+
+    const handleValueChange = (categoryId, month, value) => {
+        onChange(categoryId, month, parseCurrency(value));
+    };
+
+    // Group categories
+    const incomeCategories = data.filter(c => c.type === 'income');
+    const fixedExpenseCategories = data.filter(c => c.type === 'expense' && c.is_fixed);
+    const variableExpenseCategories = data.filter(c => c.type === 'expense' && !c.is_fixed);
+
+    // Calculate totals
+    const getMonthlyIncome = (month) => {
+        return incomeCategories.reduce((sum, cat) => sum + getValueForMonth(cat, month), 0);
+    };
+
+    const getMonthlyFixedExpense = (month) => {
+        return fixedExpenseCategories.reduce((sum, cat) => sum + getValueForMonth(cat, month), 0);
+    };
+
+    const getMonthlyVariableExpense = (month) => {
+        return variableExpenseCategories.reduce((sum, cat) => sum + getValueForMonth(cat, month), 0);
+    };
+
+    const getMonthlyTotalExpense = (month) => {
+        return getMonthlyFixedExpense(month) + getMonthlyVariableExpense(month);
+    };
+
+    const getMonthlyBalance = (month) => {
+        return getMonthlyIncome(month) - getMonthlyTotalExpense(month);
+    };
+
+    const getYearlyIncomeTotal = () => {
+        return incomeCategories.reduce((sum, cat) => sum + getCategoryYearlyTotal(cat), 0);
+    };
+
+    const getYearlyFixedExpenseTotal = () => {
+        return fixedExpenseCategories.reduce((sum, cat) => sum + getCategoryYearlyTotal(cat), 0);
+    };
+
+    const getYearlyVariableExpenseTotal = () => {
+        return variableExpenseCategories.reduce((sum, cat) => sum + getCategoryYearlyTotal(cat), 0);
+    };
+
+    const getYearlyTotalExpense = () => {
+        return getYearlyFixedExpenseTotal() + getYearlyVariableExpenseTotal();
+    };
+
+    const getYearlyBalance = () => {
+        return getYearlyIncomeTotal() - getYearlyTotalExpense();
+    };
+
+    // Category management handlers
+    const handleStartEdit = (category) => {
+        setEditingCategory(category.category_id);
+        setEditingName(category.name);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingCategory(null);
+        setEditingName('');
+    };
+
+    const handleSaveEdit = async (category) => {
+        if (editingName.trim() && editingName !== category.name) {
+            await onUpdateCategory(category.category_id, {
+                name: editingName.trim(),
+                type: category.type,
+                is_fixed: category.is_fixed,
+                display_order: category.display_order
+            });
+        }
+        setEditingCategory(null);
+        setEditingName('');
+    };
+
+    const handleDeleteClick = (category) => {
+        setDeleteConfirm(category);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (deleteConfirm) {
+            await onDeleteCategory(deleteConfirm.category_id);
+            setDeleteConfirm(null);
+        }
+    };
+
+    const handleStartAdd = (sectionType) => {
+        setAddingToSection(sectionType);
+        setNewCategoryName('');
+    };
+
+    const handleCancelAdd = () => {
+        setAddingToSection(null);
+        setNewCategoryName('');
+    };
+
+    const handleSaveAdd = async () => {
+        if (newCategoryName.trim()) {
+            const isFixed = addingToSection === 'fixed';
+            const type = addingToSection === 'income' ? 'income' : 'expense';
+            await onAddCategory({
+                name: newCategoryName.trim(),
+                type,
+                is_fixed: isFixed
+            });
+        }
+        setAddingToSection(null);
+        setNewCategoryName('');
+    };
+
+    if (loading) {
+        return (
+            <div className="glass rounded-2xl p-12 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                <span className="ml-3 text-slate-600">Daten werden geladen...</span>
+            </div>
+        );
+    }
+
+    const renderValueCell = (category, month) => {
+        const value = getValueForMonth(category, month);
+
+        if (editMode) {
+            return (
+                <input
+                    type="text"
+                    defaultValue={value !== 0 ? value.toFixed(2).replace('.', ',') : ''}
+                    onBlur={(e) => handleValueChange(category.category_id, month, e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.target.blur();
+                        }
+                    }}
+                    className="value-input w-20"
+                    placeholder="-"
+                />
+            );
+        }
+
+        return (
+            <span className={value === 0 ? 'text-slate-300' : ''}>
+                {formatCurrency(value)}
+            </span>
+        );
+    };
+
+    const renderCategoryNameCell = (category, bgClass = 'bg-white') => {
+        const isEditing = editingCategory === category.category_id;
+
+        if (isEditing) {
+            return (
+                <td className={`py-2 px-4 sticky left-0 ${bgClass} z-10`}>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit(category);
+                                if (e.key === 'Escape') handleCancelEdit();
+                            }}
+                            className="px-2 py-1 border border-blue-300 rounded-lg focus:ring-2 
+                                       focus:ring-blue-500 focus:border-blue-500 text-sm w-32"
+                            autoFocus
+                        />
+                        <button
+                            onClick={() => handleSaveEdit(category)}
+                            className="p-1 text-green-600 hover:bg-green-100 rounded"
+                        >
+                            <Check className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={handleCancelEdit}
+                            className="p-1 text-red-600 hover:bg-red-100 rounded"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                </td>
+            );
+        }
+
+        return (
+            <td className={`py-2 px-4 sticky left-0 ${bgClass} z-10 group`}>
+                <div className="flex items-center gap-2">
+                    <span>{category.name}</span>
+                    {editMode && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                                onClick={() => handleStartEdit(category)}
+                                className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded"
+                                title="Umbenennen"
+                            >
+                                <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                                onClick={() => handleDeleteClick(category)}
+                                className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded"
+                                title="Löschen"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </td>
+        );
+    };
+
+    const renderSectionHeader = (title, bgColor) => (
+        <tr>
+            <td
+                colSpan={14}
+                className={`${bgColor} font-semibold text-sm py-2 px-4 sticky left-0`}
+            >
+                {title}
+            </td>
+        </tr>
+    );
+
+    const renderAddCategoryRow = (sectionType, bgColor) => {
+        if (!editMode) return null;
+
+        const isAdding = addingToSection === sectionType;
+
+        if (isAdding) {
+            return (
+                <tr className="border-b border-slate-100">
+                    <td className="py-2 px-4 sticky left-0 bg-white z-10">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={newCategoryName}
+                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveAdd();
+                                    if (e.key === 'Escape') handleCancelAdd();
+                                }}
+                                placeholder="Kategoriename..."
+                                className="px-2 py-1 border border-blue-300 rounded-lg focus:ring-2 
+                                           focus:ring-blue-500 focus:border-blue-500 text-sm w-40"
+                                autoFocus
+                            />
+                            <button
+                                onClick={handleSaveAdd}
+                                className="p-1 text-green-600 hover:bg-green-100 rounded"
+                                disabled={!newCategoryName.trim()}
+                            >
+                                <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={handleCancelAdd}
+                                className="p-1 text-red-600 hover:bg-red-100 rounded"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </td>
+                    <td colSpan={13}></td>
+                </tr>
+            );
+        }
+
+        return (
+            <tr className="border-b border-slate-100">
+                <td className="py-2 px-4 sticky left-0 bg-white z-10">
+                    <button
+                        onClick={() => handleStartAdd(sectionType)}
+                        className={`flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 
+                                    hover:bg-slate-100 px-2 py-1 rounded-lg transition-colors`}
+                    >
+                        <Plus className="w-4 h-4" />
+                        Kategorie hinzufügen
+                    </button>
+                </td>
+                <td colSpan={13}></td>
+            </tr>
+        );
+    };
+
+    const renderTotalRow = (title, getMonthlyValue, getYearlyValue, bgColor, textColor = '') => (
+        <tr className={`${bgColor} font-semibold`}>
+            <td className={`py-2 px-4 sticky left-0 ${bgColor} ${textColor}`}>
+                {title}
+            </td>
+            {MONTHS.map((_, idx) => {
+                const value = getMonthlyValue(idx + 1);
+                return (
+                    <td key={idx} className={`py-2 px-2 text-right ${textColor}`}>
+                        {formatCurrency(value, true)}
+                    </td>
+                );
+            })}
+            <td className={`py-2 px-4 text-right font-bold ${textColor}`}>
+                {formatCurrency(getYearlyValue(), true)}
+            </td>
+        </tr>
+    );
+
+    const renderBalanceRow = () => {
+        const yearlyBalance = getYearlyBalance();
+        const isPositive = yearlyBalance >= 0;
+
+        return (
+            <tr className={`font-bold text-lg ${isPositive ? 'bg-green-100' : 'bg-red-100'}`}>
+                <td className={`py-3 px-4 sticky left-0 ${isPositive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    Überschuss / Fehlbetrag
+                </td>
+                {MONTHS.map((_, idx) => {
+                    const value = getMonthlyBalance(idx + 1);
+                    const cellPositive = value >= 0;
+                    return (
+                        <td
+                            key={idx}
+                            className={`py-3 px-2 text-right ${cellPositive ? 'text-green-700' : 'text-red-700'}`}
+                        >
+                            {formatCurrency(value, true)}
+                        </td>
+                    );
+                })}
+                <td className={`py-3 px-4 text-right ${isPositive ? 'text-green-800' : 'text-red-800'}`}>
+                    {formatCurrency(yearlyBalance, true)}
+                </td>
+            </tr>
+        );
+    };
+
+    return (
+        <>
+            <div className="glass rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="bg-slate-800 text-white">
+                                <th className="py-3 px-4 text-left font-semibold sticky left-0 bg-slate-800 z-10 min-w-[200px]">
+                                    Kategorie
+                                </th>
+                                {MONTHS.map((month) => (
+                                    <th key={month} className="py-3 px-2 text-right font-semibold min-w-[90px]">
+                                        {month}
+                                    </th>
+                                ))}
+                                <th className="py-3 px-4 text-right font-semibold min-w-[110px] bg-slate-700">
+                                    Jahressumme
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {/* EINNAHMEN Section */}
+                            {renderSectionHeader('Einnahmen', 'bg-green-200 text-green-900')}
+
+                            {incomeCategories.map((category) => (
+                                <tr key={category.category_id} className="border-b border-slate-100 hover:bg-slate-50">
+                                    {renderCategoryNameCell(category)}
+                                    {MONTHS.map((_, idx) => (
+                                        <td key={idx} className="py-2 px-2 text-right">
+                                            {renderValueCell(category, idx + 1)}
+                                        </td>
+                                    ))}
+                                    <td className="py-2 px-4 text-right font-medium bg-slate-50">
+                                        {formatCurrency(getCategoryYearlyTotal(category), true)}
+                                    </td>
+                                </tr>
+                            ))}
+
+                            {renderAddCategoryRow('income', 'bg-green-100')}
+
+                            {/* Gesamt Einnahmen */}
+                            {renderTotalRow('Gesamt/Monat', getMonthlyIncome, getYearlyIncomeTotal, 'bg-green-100', 'text-green-800')}
+
+                            {/* Spacer */}
+                            <tr><td colSpan={14} className="py-2"></td></tr>
+
+                            {/* FESTE AUSGABEN Section */}
+                            {renderSectionHeader('Feste Ausgaben', 'bg-amber-200 text-amber-900')}
+
+                            {fixedExpenseCategories.map((category) => (
+                                <tr key={category.category_id} className="border-b border-slate-100 hover:bg-slate-50">
+                                    {renderCategoryNameCell(category)}
+                                    {MONTHS.map((_, idx) => (
+                                        <td key={idx} className="py-2 px-2 text-right">
+                                            {renderValueCell(category, idx + 1)}
+                                        </td>
+                                    ))}
+                                    <td className="py-2 px-4 text-right font-medium bg-slate-50">
+                                        {formatCurrency(getCategoryYearlyTotal(category), true)}
+                                    </td>
+                                </tr>
+                            ))}
+
+                            {renderAddCategoryRow('fixed', 'bg-amber-100')}
+
+                            {/* Spacer before variable */}
+                            <tr><td colSpan={14} className="py-1"></td></tr>
+
+                            {/* VARIABLE AUSGABEN Section */}
+                            {renderSectionHeader('Variable Ausgaben', 'bg-orange-200 text-orange-900')}
+
+                            {variableExpenseCategories.map((category) => (
+                                <tr key={category.category_id} className="border-b border-slate-100 hover:bg-slate-50">
+                                    {renderCategoryNameCell(category)}
+                                    {MONTHS.map((_, idx) => (
+                                        <td key={idx} className="py-2 px-2 text-right">
+                                            {renderValueCell(category, idx + 1)}
+                                        </td>
+                                    ))}
+                                    <td className="py-2 px-4 text-right font-medium bg-slate-50">
+                                        {formatCurrency(getCategoryYearlyTotal(category), true)}
+                                    </td>
+                                </tr>
+                            ))}
+
+                            {renderAddCategoryRow('variable', 'bg-orange-100')}
+
+                            {/* Gesamtausgaben */}
+                            {renderTotalRow('Gesamtausgaben', getMonthlyTotalExpense, getYearlyTotalExpense, 'bg-orange-100', 'text-orange-800')}
+
+                            {/* Spacer */}
+                            <tr><td colSpan={14} className="py-2"></td></tr>
+
+                            {/* SALDO Row */}
+                            {renderBalanceRow()}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={deleteConfirm !== null}
+                title="Kategorie löschen"
+                message={`Möchtest du die Kategorie "${deleteConfirm?.name}" wirklich löschen? Alle zugehörigen Werte gehen verloren.`}
+                confirmLabel="Löschen"
+                cancelLabel="Abbrechen"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setDeleteConfirm(null)}
+                destructive={true}
+            />
+        </>
+    );
+}

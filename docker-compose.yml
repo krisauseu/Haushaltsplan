@@ -1,0 +1,35 @@
+services:
+  # Node.js Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: haushaltsplan-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    networks:
+      - haushaltsplan-network
+
+  # React Frontend (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: haushaltsplan-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - haushaltsplan-network
+
+networks:
+  haushaltsplan-network:
+    name: haushaltsplan-network
+    driver: bridge
