@@ -16,12 +16,24 @@ const COLORS = [
     '#c084fc', // purple-400
 ];
 
-export default function ExpenseDistributionChart({ data, loading }) {
+export default function ExpenseDistributionChart({ data, loading, selectedMonth = 0 }) {
+    // Helper to get amount for a category based on month filter
+    const getCategoryTotal = (category) => {
+        if (selectedMonth === 0) {
+            // Gesamtjahr: sum all months
+            return category.monthly_values?.reduce((sum, mv) => sum + (mv.amount || 0), 0) || 0;
+        } else {
+            // Specific month
+            const monthValue = category.monthly_values?.find(mv => mv.month === selectedMonth);
+            return monthValue?.amount || 0;
+        }
+    };
+
     // Filter only expense categories and calculate totals
     const expenseData = data
         ?.filter(cat => cat.type === 'expense')
         .map((cat, index) => {
-            const total = cat.monthly_values?.reduce((sum, mv) => sum + (mv.amount || 0), 0) || 0;
+            const total = getCategoryTotal(cat);
             return {
                 name: cat.name,
                 value: total,

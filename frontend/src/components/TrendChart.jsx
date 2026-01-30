@@ -8,11 +8,13 @@ import {
     Tooltip,
     ResponsiveContainer,
     Legend,
+    ReferenceArea,
+    ReferenceDot,
 } from 'recharts';
 
 const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
-export default function TrendChart({ data, loading }) {
+export default function TrendChart({ data, loading, selectedMonth = 0 }) {
     // Calculate monthly totals for income and expenses
     const monthlyData = MONTHS.map((month, index) => {
         const monthNum = index + 1;
@@ -33,9 +35,11 @@ export default function TrendChart({ data, loading }) {
 
         return {
             month,
+            monthNum,
             income,
             expense,
             surplus: income - expense,
+            isSelected: selectedMonth === monthNum,
         };
     });
 
@@ -50,9 +54,12 @@ export default function TrendChart({ data, loading }) {
 
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
+            const isSelected = selectedMonth > 0 && MONTHS[selectedMonth - 1] === label;
             return (
-                <div className="glass rounded-xl p-4 shadow-xl border border-white/50">
-                    <p className="font-semibold text-slate-800 mb-2">{label}</p>
+                <div className={`glass rounded-xl p-4 shadow-xl border ${isSelected ? 'border-blue-400 ring-2 ring-blue-200' : 'border-white/50'}`}>
+                    <p className={`font-semibold mb-2 ${isSelected ? 'text-blue-700' : 'text-slate-800'}`}>
+                        {label} {isSelected && '(ausgewählt)'}
+                    </p>
                     {payload.map((entry, index) => (
                         <p key={index} className="text-sm" style={{ color: entry.color }}>
                             {entry.name}: {formatCurrency(entry.value)}
@@ -64,6 +71,26 @@ export default function TrendChart({ data, loading }) {
         return null;
     };
 
+    // Custom dot renderer to highlight selected month
+    const renderCustomDot = (props, isSelected) => {
+        const { cx, cy, stroke, dataKey } = props;
+
+        if (props.payload?.isSelected && selectedMonth > 0) {
+            return (
+                <g>
+                    {/* Outer glow */}
+                    <circle cx={cx} cy={cy} r={10} fill={stroke} fillOpacity={0.2} />
+                    {/* Main dot */}
+                    <circle cx={cx} cy={cy} r={6} fill={stroke} stroke="white" strokeWidth={2} />
+                </g>
+            );
+        }
+
+        return (
+            <circle cx={cx} cy={cy} r={4} fill={stroke} strokeWidth={2} />
+        );
+    };
+
     if (loading) {
         return (
             <div className="glass rounded-2xl p-6 animate-pulse">
@@ -73,9 +100,20 @@ export default function TrendChart({ data, loading }) {
         );
     }
 
+    // Calculate ReferenceArea position for selected month
+    const selectedIndex = selectedMonth > 0 ? selectedMonth - 1 : -1;
+    const showReferenceArea = selectedMonth > 0;
+
     return (
         <div className="glass rounded-2xl p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Jahresverlauf</h3>
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-800">Jahresverlauf</h3>
+                {selectedMonth > 0 && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-lg font-medium">
+                        {MONTHS[selectedMonth - 1]} hervorgehoben
+                    </span>
+                )}
+            </div>
             <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={monthlyData}>
@@ -84,12 +122,60 @@ export default function TrendChart({ data, loading }) {
                                 <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
                                 <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05} />
                             </linearGradient>
+                            <linearGradient id="highlightGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.15} />
+                                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05} />
+                            </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+
+                        {/* Highlight reference area for selected month */}
+                        {showReferenceArea && (
+                            <ReferenceArea
+                                x1={MONTHS[selectedIndex]}
+                                x2={MONTHS[selectedIndex]}
+                                y1={0}
+                                fill="url(#highlightGradient)"
+                                fillOpacity={1}
+                                stroke="#3b82f6"
+                                strokeWidth={2}
+                                strokeDasharray="4 4"
+                            />
+                        )}
+
                         <XAxis
                             dataKey="month"
-                            tick={{ fill: '#64748b', fontSize: 12 }}
+                            tick={({ x, y, payload }) => {
+                                const isSelected = selectedMonth > 0 && MONTHS[selectedMonth - 1] === payload.value;
+                                return (
+                                    <g transform={`translate(${x},${y})`}>
+                                        {isSelected && (
+                                            <rect
+                                                x={-16}
+                                                y={2}
+                                                width={32}
+                                                height={18}
+                                                rx={4}
+                                                fill="#3b82f6"
+                                            />
+                                        )}
+                                        <text
+                                            x={0}
+                                            y={12}
+                                            dy={2}
+                                            textAnchor="middle"
+                                            fill={isSelected ? '#ffffff' : '#64748b'}
+                                            fontSize={12}
+                                            fontWeight={isSelected ? 600 : 400}
+                                        >
+                                            {payload.value}
+                                        </text>
+                                    </g>
+                                );
+                            }}
                             axisLine={{ stroke: '#cbd5e1' }}
+                            tickLine={false}
+                            height={30}
                         />
                         <YAxis
                             tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
@@ -116,7 +202,7 @@ export default function TrendChart({ data, loading }) {
                             name="Einnahmen"
                             stroke="#22c55e"
                             strokeWidth={3}
-                            dot={{ fill: '#22c55e', strokeWidth: 2, r: 4 }}
+                            dot={(props) => renderCustomDot(props)}
                             activeDot={{ r: 6, strokeWidth: 0 }}
                         />
                         <Line
@@ -125,7 +211,7 @@ export default function TrendChart({ data, loading }) {
                             name="Ausgaben"
                             stroke="#f97316"
                             strokeWidth={3}
-                            dot={{ fill: '#f97316', strokeWidth: 2, r: 4 }}
+                            dot={(props) => renderCustomDot(props)}
                             activeDot={{ r: 6, strokeWidth: 0 }}
                         />
                     </ComposedChart>

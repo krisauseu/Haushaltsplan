@@ -10,7 +10,9 @@ Eine moderne Full-Stack Web-Anwendung zur Verwaltung von Haushaltsbudgets mit Su
 - 📈 **Analyse-Dashboard** mit interaktiven Charts:
   - Doughnut-Chart für Ausgaben-Verteilung pro Kategorie
   - Trend-Chart (Einnahmen vs. Ausgaben im Jahresverlauf)
-  - Quick-Stats: Sparrate, Ø Überschuss, teuerste Kategorie
+  - Quick-Stats: Sparrate, Ø Überschuss, **Top 5 Ausgaben** (exkl. Miete)
+- 📅 **Monats-Filter** - Analyse nach einzelnen Monaten oder Gesamtjahr filtern
+- 🎯 **Monat-Highlight** - Gewählter Monat wird im Trend-Chart visuell hervorgehoben
 - 📄 **PDF Export** - Jahresbericht als professionelles PDF herunterladen
 - 🎨 **Farbkodierung** - Grün für positive, Rot für negative Salden
 - ☁️ **Supabase** Cloud-Datenbank für sichere Speicherung
