@@ -14,6 +14,7 @@ Eine moderne Full-Stack Web-Anwendung zur Verwaltung von Haushaltsbudgets mit Su
 - 📅 **Monats-Filter** - Analyse nach einzelnen Monaten oder Gesamtjahr filtern
 - 🎯 **Monat-Highlight** - Gewählter Monat wird im Trend-Chart visuell hervorgehoben
 - 📄 **PDF Export** - Jahresbericht als professionelles PDF herunterladen
+- 🌙 **Dark Mode** - Umschaltbarer Dark/Light Mode mit System-Präferenz-Erkennung
 - 🎨 **Farbkodierung** - Grün für positive, Rot für negative Salden
 - ☁️ **Supabase** Cloud-Datenbank für sichere Speicherung
 - 🐳 **Docker-ready** für einfaches Deployment

@@ -1,4 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useTheme } from '../context/ThemeContext';
 
 // Pastel color palette for categories
 const COLORS = [
@@ -17,6 +18,7 @@ const COLORS = [
 ];
 
 export default function ExpenseDistributionChart({ data, loading, selectedMonth = 0 }) {
+    const { isDark } = useTheme();
     // Helper to get amount for a category based on month filter
     const getCategoryTotal = (category) => {
         if (selectedMonth === 0) {
@@ -59,10 +61,10 @@ export default function ExpenseDistributionChart({ data, loading, selectedMonth 
             const percent = total > 0 ? ((data.value / total) * 100).toFixed(1) : 0;
 
             return (
-                <div className="glass rounded-xl p-3 shadow-xl border border-white/50">
-                    <p className="font-semibold text-slate-800">{data.name}</p>
-                    <p className="text-slate-600">{formatCurrency(data.value)}</p>
-                    <p className="text-sm text-slate-500">{percent}% der Ausgaben</p>
+                <div className="glass rounded-xl p-3 shadow-xl border border-white/50 dark:border-slate-700">
+                    <p className="font-semibold text-slate-800 dark:text-white">{data.name}</p>
+                    <p className="text-slate-600 dark:text-slate-300">{formatCurrency(data.value)}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{percent}% der Ausgaben</p>
                 </div>
             );
         }
@@ -80,7 +82,7 @@ export default function ExpenseDistributionChart({ data, loading, selectedMonth 
                                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: entry.color }}
                             />
-                            <span className="text-slate-600 truncate" title={entry.value}>
+                            <span className="text-slate-600 dark:text-slate-400 truncate" title={entry.value}>
                                 {entry.value}
                             </span>
                         </li>
@@ -93,8 +95,8 @@ export default function ExpenseDistributionChart({ data, loading, selectedMonth 
     if (loading) {
         return (
             <div className="glass rounded-2xl p-6 animate-pulse">
-                <div className="h-6 bg-slate-200 rounded w-48 mb-4"></div>
-                <div className="h-64 bg-slate-100 rounded-xl"></div>
+                <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-48 mb-4"></div>
+                <div className="h-64 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
             </div>
         );
     }
@@ -102,8 +104,8 @@ export default function ExpenseDistributionChart({ data, loading, selectedMonth 
     if (expenseData.length === 0) {
         return (
             <div className="glass rounded-2xl p-6">
-                <h3 className="text-lg font-semibold text-slate-800 mb-4">Ausgaben-Verteilung</h3>
-                <div className="h-64 flex items-center justify-center text-slate-400">
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Ausgaben-Verteilung</h3>
+                <div className="h-64 flex items-center justify-center text-slate-400 dark:text-slate-500">
                     Keine Ausgaben vorhanden
                 </div>
             </div>
@@ -112,7 +114,7 @@ export default function ExpenseDistributionChart({ data, loading, selectedMonth 
 
     return (
         <div className="glass rounded-2xl p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Ausgaben-Verteilung</h3>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Ausgaben-Verteilung</h3>
             <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>

@@ -74,8 +74,8 @@ export default function QuickStatsCards({ summary, data, loading, selectedMonth 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {[1, 2, 3].map((i) => (
                     <div key={i} className="glass rounded-2xl p-6 animate-pulse">
-                        <div className="h-4 bg-slate-200 rounded w-24 mb-3"></div>
-                        <div className="h-8 bg-slate-200 rounded w-32"></div>
+                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24 mb-3"></div>
+                        <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-32"></div>
                     </div>
                 ))}
             </div>
@@ -85,42 +85,42 @@ export default function QuickStatsCards({ summary, data, loading, selectedMonth 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {/* Sparrate Card */}
-            <div className={`glass rounded-2xl p-6 bg-gradient-to-br from-emerald-50 to-teal-50 
-                         border border-white/50 shadow-xl shadow-emerald-500/20 transition-transform hover:scale-[1.02]`}>
+            <div className={`glass rounded-2xl p-6 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30
+                         border border-white/50 dark:border-emerald-900/30 shadow-xl shadow-emerald-500/20 transition-transform hover:scale-[1.02]`}>
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-600">Sparrate</span>
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Sparrate</span>
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 
                                   flex items-center justify-center shadow-lg">
                         <Percent className="w-5 h-5 text-white" />
                     </div>
                 </div>
-                <p className={`text-2xl font-bold ${parseFloat(savingsRate) >= 0 ? 'text-emerald-700' : 'text-red-700'} truncate`}>
+                <p className={`text-2xl font-bold ${parseFloat(savingsRate) >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'} truncate`}>
                     {savingsRate}%
                 </p>
-                <p className="text-xs text-slate-500 mt-1">Anteil gespart am Einkommen</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Anteil gespart am Einkommen</p>
             </div>
 
             {/* Überschuss Card */}
-            <div className={`glass rounded-2xl p-6 bg-gradient-to-br ${avgMonthlySurplus >= 0 ? 'from-blue-50 to-indigo-50' : 'from-red-50 to-pink-50'} 
-                         border border-white/50 shadow-xl ${avgMonthlySurplus >= 0 ? 'shadow-blue-500/20' : 'shadow-red-500/20'} transition-transform hover:scale-[1.02]`}>
+            <div className={`glass rounded-2xl p-6 bg-gradient-to-br ${avgMonthlySurplus >= 0 ? 'from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30' : 'from-red-50 to-pink-50 dark:from-red-950/30 dark:to-pink-950/30'} 
+                         border border-white/50 dark:border-slate-800 shadow-xl ${avgMonthlySurplus >= 0 ? 'shadow-blue-500/20' : 'shadow-red-500/20'} transition-transform hover:scale-[1.02]`}>
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-600">{surplusLabel}</span>
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{surplusLabel}</span>
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${avgMonthlySurplus >= 0 ? 'from-blue-500 to-indigo-600' : 'from-red-500 to-pink-600'} 
                                   flex items-center justify-center shadow-lg`}>
                         <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                 </div>
-                <p className={`text-2xl font-bold ${avgMonthlySurplus >= 0 ? 'text-blue-700' : 'text-red-700'} truncate`}>
+                <p className={`text-2xl font-bold ${avgMonthlySurplus >= 0 ? 'text-blue-700 dark:text-blue-400' : 'text-red-700 dark:text-red-400'} truncate`}>
                     {formatCurrency(avgMonthlySurplus)}
                 </p>
-                <p className="text-xs text-slate-500 mt-1">{surplusSubtitle}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{surplusSubtitle}</p>
             </div>
 
             {/* Top 5 Ausgaben Card */}
-            <div className="glass rounded-2xl p-6 bg-gradient-to-br from-amber-50 to-orange-50 
-                         border border-white/50 shadow-xl shadow-amber-500/20 transition-transform hover:scale-[1.02]">
+            <div className="glass rounded-2xl p-6 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30
+                         border border-white/50 dark:border-amber-900/30 shadow-xl shadow-amber-500/20 transition-transform hover:scale-[1.02]">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-slate-600">Top 5 Ausgaben</span>
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Top 5 Ausgaben</span>
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 
                                   flex items-center justify-center shadow-lg">
                         <Trophy className="w-5 h-5 text-white" />
@@ -136,14 +136,14 @@ export default function QuickStatsCards({ summary, data, loading, selectedMonth 
                             return (
                                 <div key={cat.name} className="group">
                                     <div className="flex items-center justify-between text-xs mb-0.5">
-                                        <span className="text-slate-700 font-medium truncate flex-1 mr-2" title={cat.name}>
+                                        <span className="text-slate-700 dark:text-slate-300 font-medium truncate flex-1 mr-2" title={cat.name}>
                                             {index + 1}. {cat.name}
                                         </span>
-                                        <span className="text-slate-500 font-semibold whitespace-nowrap">
+                                        <span className="text-slate-500 dark:text-slate-400 font-semibold whitespace-nowrap">
                                             {formatCurrency(cat.total)}
                                         </span>
                                     </div>
-                                    <div className="h-1.5 bg-slate-200/50 rounded-full overflow-hidden">
+                                    <div className="h-1.5 bg-slate-200/50 dark:bg-slate-700/50 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-500"
                                             style={{ width: `${percentage}%` }}
@@ -154,9 +154,9 @@ export default function QuickStatsCards({ summary, data, loading, selectedMonth 
                         })}
                     </div>
                 ) : (
-                    <p className="text-sm text-slate-500">Keine Ausgaben vorhanden</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Keine Ausgaben vorhanden</p>
                 )}
-                <p className="text-xs text-slate-400 mt-2">exkl. Miete</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">exkl. Miete</p>
             </div>
         </div>
     );

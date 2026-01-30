@@ -27,17 +27,17 @@ export default function AnalysisPage({ data, summary, year, loading }) {
         <div className="space-y-6">
             {/* Month Selector */}
             <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-slate-600">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                     <Calendar className="w-5 h-5" />
                     <span className="text-sm font-medium">Zeitraum:</span>
                 </div>
                 <select
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                    className="glass rounded-xl px-4 py-2 text-sm font-medium text-slate-700 
-                             border border-slate-200 focus:outline-none focus:ring-2 
+                    className="glass rounded-xl px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300
+                             border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 
                              focus:ring-blue-500/30 focus:border-blue-400 cursor-pointer
-                             bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow"
+                             bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow"
                     disabled={loading}
                 >
                     {MONTHS.map((month) => (
@@ -47,7 +47,7 @@ export default function AnalysisPage({ data, summary, year, loading }) {
                     ))}
                 </select>
                 {selectedMonth > 0 && (
-                    <span className="text-xs text-slate-500 bg-blue-50 px-2 py-1 rounded-lg">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-lg">
                         {MONTHS[selectedMonth].label} {year}
                     </span>
                 )}

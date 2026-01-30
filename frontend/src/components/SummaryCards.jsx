@@ -51,8 +51,8 @@ export default function SummaryCards({ summary, loading }) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {[1, 2, 3].map((i) => (
                     <div key={i} className="glass rounded-2xl p-6 animate-pulse">
-                        <div className="h-4 bg-slate-200 rounded w-24 mb-3"></div>
-                        <div className="h-8 bg-slate-200 rounded w-32"></div>
+                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24 mb-3"></div>
+                        <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-32"></div>
                     </div>
                 ))}
             </div>
@@ -68,7 +68,7 @@ export default function SummaryCards({ summary, loading }) {
                      border border-white/50 shadow-xl ${card.shadowColor} transition-transform hover:scale-[1.02]`}
                 >
                     <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-medium text-slate-600">{card.title}</span>
+                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{card.title}</span>
                         <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${card.gradient} 
                           flex items-center justify-center shadow-lg`}>
                             <card.icon className="w-5 h-5 text-white" />

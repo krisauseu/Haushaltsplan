@@ -166,7 +166,7 @@ export default function BudgetTable({
         return (
             <div className="glass rounded-2xl p-12 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                <span className="ml-3 text-slate-600">Daten werden geladen...</span>
+                <span className="ml-3 text-slate-600 dark:text-slate-400">Daten werden geladen...</span>
             </div>
         );
     }
@@ -207,13 +207,13 @@ export default function BudgetTable({
         }
 
         return (
-            <span className={value === 0 ? 'text-slate-300' : ''}>
+            <span className={value === 0 ? 'text-slate-300 dark:text-slate-600' : ''}>
                 {formatCurrency(value)}
             </span>
         );
     };
 
-    const renderCategoryNameCell = (category, bgClass = 'bg-white') => {
+    const renderCategoryNameCell = (category, bgClass = 'bg-white dark:bg-slate-900') => {
         const isEditing = editingCategory === category.category_id;
 
         if (isEditing) {
@@ -228,19 +228,20 @@ export default function BudgetTable({
                                 if (e.key === 'Enter') handleSaveEdit(category);
                                 if (e.key === 'Escape') handleCancelEdit();
                             }}
-                            className="px-2 py-1 border border-blue-300 rounded-lg focus:ring-2 
-                                       focus:ring-blue-500 focus:border-blue-500 text-sm w-32"
+                            className="px-2 py-1 border border-blue-300 dark:border-blue-600 rounded-lg focus:ring-2 
+                                       focus:ring-blue-500 focus:border-blue-500 text-sm w-32
+                                       bg-white dark:bg-slate-800 dark:text-white"
                             autoFocus
                         />
                         <button
                             onClick={() => handleSaveEdit(category)}
-                            className="p-1 text-green-600 hover:bg-green-100 rounded"
+                            className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded"
                         >
                             <Check className="w-4 h-4" />
                         </button>
                         <button
                             onClick={handleCancelEdit}
-                            className="p-1 text-red-600 hover:bg-red-100 rounded"
+                            className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -257,14 +258,14 @@ export default function BudgetTable({
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                                 onClick={() => handleStartEdit(category)}
-                                className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-100 rounded"
+                                className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
                                 title="Umbenennen"
                             >
                                 <Pencil className="w-3.5 h-3.5" />
                             </button>
                             <button
                                 onClick={() => handleDeleteClick(category)}
-                                className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded"
+                                className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
                                 title="Löschen"
                             >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -294,8 +295,8 @@ export default function BudgetTable({
 
         if (isAdding) {
             return (
-                <tr className="border-b border-slate-100">
-                    <td className="py-2 px-4 sticky left-0 bg-white z-10">
+                <tr className="border-b border-slate-100 dark:border-slate-800">
+                    <td className="py-2 px-4 sticky left-0 bg-white dark:bg-slate-900 z-10">
                         <div className="flex items-center gap-2">
                             <input
                                 type="text"
@@ -306,20 +307,21 @@ export default function BudgetTable({
                                     if (e.key === 'Escape') handleCancelAdd();
                                 }}
                                 placeholder="Kategoriename..."
-                                className="px-2 py-1 border border-blue-300 rounded-lg focus:ring-2 
-                                           focus:ring-blue-500 focus:border-blue-500 text-sm w-40"
+                                className="px-2 py-1 border border-blue-300 dark:border-blue-600 rounded-lg focus:ring-2 
+                                           focus:ring-blue-500 focus:border-blue-500 text-sm w-40
+                                           bg-white dark:bg-slate-800 dark:text-white dark:placeholder-slate-500"
                                 autoFocus
                             />
                             <button
                                 onClick={handleSaveAdd}
-                                className="p-1 text-green-600 hover:bg-green-100 rounded"
+                                className="p-1 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded"
                                 disabled={!newCategoryName.trim()}
                             >
                                 <Check className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={handleCancelAdd}
-                                className="p-1 text-red-600 hover:bg-red-100 rounded"
+                                className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -331,12 +333,12 @@ export default function BudgetTable({
         }
 
         return (
-            <tr className="border-b border-slate-100">
-                <td className="py-2 px-4 sticky left-0 bg-white z-10">
+            <tr className="border-b border-slate-100 dark:border-slate-800">
+                <td className="py-2 px-4 sticky left-0 bg-white dark:bg-slate-900 z-10">
                     <button
                         onClick={() => handleStartAdd(sectionType)}
-                        className={`flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 
-                                    hover:bg-slate-100 px-2 py-1 rounded-lg transition-colors`}
+                        className={`flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200
+                                    hover:bg-slate-100 dark:hover:bg-slate-800 px-2 py-1 rounded-lg transition-colors`}
                     >
                         <Plus className="w-4 h-4" />
                         Kategorie hinzufügen
@@ -371,8 +373,8 @@ export default function BudgetTable({
         const isPositive = yearlyBalance >= 0;
 
         return (
-            <tr className={`font-bold text-lg ${isPositive ? 'bg-green-100' : 'bg-red-100'}`}>
-                <td className={`py-3 px-4 sticky left-0 ${isPositive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <tr className={`font-bold text-lg ${isPositive ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                <td className={`py-3 px-4 sticky left-0 ${isPositive ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'}`}>
                     Überschuss / Fehlbetrag
                 </td>
                 {MONTHS.map((_, idx) => {
@@ -381,13 +383,13 @@ export default function BudgetTable({
                     return (
                         <td
                             key={idx}
-                            className={`py-3 px-2 text-right ${cellPositive ? 'text-green-700' : 'text-red-700'}`}
+                            className={`py-3 px-2 text-right ${cellPositive ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}
                         >
                             {formatCurrency(value, true)}
                         </td>
                     );
                 })}
-                <td className={`py-3 px-4 text-right ${isPositive ? 'text-green-800' : 'text-red-800'}`}>
+                <td className={`py-3 px-4 text-right ${isPositive ? 'text-green-800 dark:text-green-400' : 'text-red-800 dark:text-red-400'}`}>
                     {formatCurrency(yearlyBalance, true)}
                 </td>
             </tr>
@@ -419,14 +421,14 @@ export default function BudgetTable({
                             {renderSectionHeader('Einnahmen', 'bg-green-200 text-green-900')}
 
                             {incomeCategories.map((category) => (
-                                <tr key={category.category_id} className="border-b border-slate-100 hover:bg-slate-50">
+                                <tr key={category.category_id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                     {renderCategoryNameCell(category)}
                                     {MONTHS.map((_, idx) => (
                                         <td key={idx} className="py-2 px-2 text-right">
                                             {renderValueCell(category, idx + 1)}
                                         </td>
                                     ))}
-                                    <td className="py-2 px-4 text-right font-medium bg-slate-50">
+                                    <td className="py-2 px-4 text-right font-medium bg-slate-50 dark:bg-slate-800/50">
                                         {formatCurrency(getCategoryYearlyTotal(category), true)}
                                     </td>
                                 </tr>
@@ -444,14 +446,14 @@ export default function BudgetTable({
                             {renderSectionHeader('Feste Ausgaben', 'bg-amber-200 text-amber-900')}
 
                             {fixedExpenseCategories.map((category) => (
-                                <tr key={category.category_id} className="border-b border-slate-100 hover:bg-slate-50">
+                                <tr key={category.category_id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                     {renderCategoryNameCell(category)}
                                     {MONTHS.map((_, idx) => (
                                         <td key={idx} className="py-2 px-2 text-right">
                                             {renderValueCell(category, idx + 1)}
                                         </td>
                                     ))}
-                                    <td className="py-2 px-4 text-right font-medium bg-slate-50">
+                                    <td className="py-2 px-4 text-right font-medium bg-slate-50 dark:bg-slate-800/50">
                                         {formatCurrency(getCategoryYearlyTotal(category), true)}
                                     </td>
                                 </tr>
@@ -466,14 +468,14 @@ export default function BudgetTable({
                             {renderSectionHeader('Variable Ausgaben', 'bg-orange-200 text-orange-900')}
 
                             {variableExpenseCategories.map((category) => (
-                                <tr key={category.category_id} className="border-b border-slate-100 hover:bg-slate-50">
+                                <tr key={category.category_id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                     {renderCategoryNameCell(category)}
                                     {MONTHS.map((_, idx) => (
                                         <td key={idx} className="py-2 px-2 text-right">
                                             {renderValueCell(category, idx + 1)}
                                         </td>
                                     ))}
-                                    <td className="py-2 px-4 text-right font-medium bg-slate-50">
+                                    <td className="py-2 px-4 text-right font-medium bg-slate-50 dark:bg-slate-800/50">
                                         {formatCurrency(getCategoryYearlyTotal(category), true)}
                                     </td>
                                 </tr>

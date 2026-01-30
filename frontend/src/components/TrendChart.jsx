@@ -11,11 +11,20 @@ import {
     ReferenceArea,
     ReferenceDot,
 } from 'recharts';
+import { useTheme } from '../context/ThemeContext';
 
 const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
 export default function TrendChart({ data, loading, selectedMonth = 0 }) {
-    // Calculate monthly totals for income and expenses
+    const { isDark } = useTheme();
+
+    // Theme-aware colors
+    const gridColor = isDark ? '#334155' : '#e2e8f0';
+    const axisColor = isDark ? '#475569' : '#cbd5e1';
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    const tooltipBorder = isDark ? 'border-slate-700' : 'border-white/50';
+    const tooltipText = isDark ? 'text-slate-200' : 'text-slate-800';
+    const legendText = isDark ? 'text-slate-400' : 'text-slate-600';
     const monthlyData = MONTHS.map((month, index) => {
         const monthNum = index + 1;
 
@@ -56,8 +65,8 @@ export default function TrendChart({ data, loading, selectedMonth = 0 }) {
         if (active && payload && payload.length) {
             const isSelected = selectedMonth > 0 && MONTHS[selectedMonth - 1] === label;
             return (
-                <div className={`glass rounded-xl p-4 shadow-xl border ${isSelected ? 'border-blue-400 ring-2 ring-blue-200' : 'border-white/50'}`}>
-                    <p className={`font-semibold mb-2 ${isSelected ? 'text-blue-700' : 'text-slate-800'}`}>
+                <div className={`glass rounded-xl p-4 shadow-xl border ${isSelected ? 'border-blue-400 ring-2 ring-blue-200 dark:ring-blue-900' : tooltipBorder}`}>
+                    <p className={`font-semibold mb-2 ${isSelected ? 'text-blue-700 dark:text-blue-400' : tooltipText}`}>
                         {label} {isSelected && '(ausgewählt)'}
                     </p>
                     {payload.map((entry, index) => (
@@ -94,8 +103,8 @@ export default function TrendChart({ data, loading, selectedMonth = 0 }) {
     if (loading) {
         return (
             <div className="glass rounded-2xl p-6 animate-pulse">
-                <div className="h-6 bg-slate-200 rounded w-48 mb-4"></div>
-                <div className="h-64 bg-slate-100 rounded-xl"></div>
+                <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-48 mb-4"></div>
+                <div className="h-64 bg-slate-100 dark:bg-slate-800 rounded-xl"></div>
             </div>
         );
     }
@@ -107,9 +116,9 @@ export default function TrendChart({ data, loading, selectedMonth = 0 }) {
     return (
         <div className="glass rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-slate-800">Jahresverlauf</h3>
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Jahresverlauf</h3>
                 {selectedMonth > 0 && (
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-lg font-medium">
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-lg font-medium">
                         {MONTHS[selectedMonth - 1]} hervorgehoben
                     </span>
                 )}
@@ -127,7 +136,7 @@ export default function TrendChart({ data, loading, selectedMonth = 0 }) {
                                 <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.05} />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
 
                         {/* Highlight reference area for selected month */}
                         {showReferenceArea && (
@@ -164,7 +173,7 @@ export default function TrendChart({ data, loading, selectedMonth = 0 }) {
                                             y={12}
                                             dy={2}
                                             textAnchor="middle"
-                                            fill={isSelected ? '#ffffff' : '#64748b'}
+                                            fill={isSelected ? '#ffffff' : textColor}
                                             fontSize={12}
                                             fontWeight={isSelected ? 600 : 400}
                                         >
@@ -173,20 +182,20 @@ export default function TrendChart({ data, loading, selectedMonth = 0 }) {
                                     </g>
                                 );
                             }}
-                            axisLine={{ stroke: '#cbd5e1' }}
+                            axisLine={{ stroke: axisColor }}
                             tickLine={false}
                             height={30}
                         />
                         <YAxis
                             tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                            tick={{ fill: '#64748b', fontSize: 12 }}
-                            axisLine={{ stroke: '#cbd5e1' }}
+                            tick={{ fill: textColor, fontSize: 12 }}
+                            axisLine={{ stroke: axisColor }}
                         />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend
                             wrapperStyle={{ paddingTop: '10px' }}
                             formatter={(value) => (
-                                <span className="text-slate-600 text-sm">{value}</span>
+                                <span className={`${legendText} text-sm`}>{value}</span>
                             )}
                         />
                         <Area

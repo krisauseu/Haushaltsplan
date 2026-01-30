@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight, Edit3, Save, X, Wallet, FileDown, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit3, Save, X, Wallet, FileDown, Loader2, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Header({
     year,
@@ -12,6 +13,7 @@ export default function Header({
     onExportPDF,
     isExporting
 }) {
+    const { isDark, toggleTheme } = useTheme();
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
 
@@ -27,16 +29,16 @@ export default function Header({
                         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                             Haushaltsplan
                         </h1>
-                        <p className="text-sm text-slate-500">Budget Planner</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Budget Planner</p>
                     </div>
                 </div>
 
                 {/* Year Selector */}
-                <div className="flex items-center gap-2 bg-slate-100 rounded-xl p-1">
+                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
                     <button
                         onClick={() => onYearChange(year - 1)}
                         disabled={loading}
-                        className="p-2 hover:bg-white rounded-lg transition-colors disabled:opacity-50"
+                        className="p-2 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
                         aria-label="Vorheriges Jahr"
                     >
                         <ChevronLeft className="w-5 h-5" />
@@ -46,7 +48,7 @@ export default function Header({
                         value={year}
                         onChange={(e) => onYearChange(parseInt(e.target.value))}
                         disabled={loading}
-                        className="bg-white px-4 py-2 rounded-lg font-semibold text-lg border-0 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        className="bg-white dark:bg-slate-700 dark:text-white px-4 py-2 rounded-lg font-semibold text-lg border-0 focus:ring-2 focus:ring-blue-500 cursor-pointer"
                     >
                         {years.map((y) => (
                             <option key={y} value={y}>{y}</option>
@@ -56,7 +58,7 @@ export default function Header({
                     <button
                         onClick={() => onYearChange(year + 1)}
                         disabled={loading}
-                        className="p-2 hover:bg-white rounded-lg transition-colors disabled:opacity-50"
+                        className="p-2 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50"
                         aria-label="Nächstes Jahr"
                     >
                         <ChevronRight className="w-5 h-5" />
@@ -65,6 +67,20 @@ export default function Header({
 
                 {/* Edit Mode Controls */}
                 <div className="flex items-center gap-2" data-pdf-hide>
+                    {/* Theme Toggle */}
+                    <button
+                        onClick={toggleTheme}
+                        className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 
+                                   rounded-xl transition-colors"
+                        aria-label={isDark ? 'Zum Light Mode wechseln' : 'Zum Dark Mode wechseln'}
+                    >
+                        {isDark ? (
+                            <Sun className="w-5 h-5 text-amber-500" />
+                        ) : (
+                            <Moon className="w-5 h-5 text-slate-600" />
+                        )}
+                    </button>
+
                     {/* PDF Export Button */}
                     <button
                         onClick={onExportPDF}
@@ -91,8 +107,8 @@ export default function Header({
                             <button
                                 onClick={onCancel}
                                 disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 
-                         text-slate-700 rounded-xl font-medium transition-colors disabled:opacity-50"
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 
+                         text-slate-700 dark:text-slate-200 rounded-xl font-medium transition-colors disabled:opacity-50"
                             >
                                 <X className="w-4 h-4" />
                                 Abbrechen
@@ -125,3 +141,4 @@ export default function Header({
         </header>
     );
 }
+

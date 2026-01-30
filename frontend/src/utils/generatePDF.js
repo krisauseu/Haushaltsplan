@@ -48,6 +48,16 @@ export async function generatePDF(year) {
         el.style.display = 'none';
     });
 
+    // Store current theme and force light mode for PDF
+    const htmlElement = document.documentElement;
+    const wasDarkMode = htmlElement.classList.contains('dark');
+    if (wasDarkMode) {
+        htmlElement.classList.remove('dark');
+    }
+
+    // Small delay to let styles recalculate
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
         // Skip Summary Cards to reduce whitespace
         // const summaryCards = document.querySelector('[data-pdf-summary-cards]');
@@ -78,6 +88,11 @@ export async function generatePDF(year) {
         originalStyles.forEach(({ element, display }) => {
             element.style.display = display;
         });
+
+        // Restore original theme
+        if (wasDarkMode) {
+            htmlElement.classList.add('dark');
+        }
     }
 }
 

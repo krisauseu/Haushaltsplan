@@ -216,7 +216,7 @@ function App() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-4 md:p-6 lg:p-8">
+        <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 md:p-6 lg:p-8 transition-colors duration-300">
             <div className="max-w-[1800px] mx-auto">
                 <Header
                     year={year}
@@ -232,12 +232,12 @@ function App() {
                 />
 
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700">
+                    <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-3 text-red-700 dark:text-red-400">
                         <AlertCircle className="w-5 h-5 flex-shrink-0" />
                         <span>{error}</span>
                         <button
                             onClick={fetchData}
-                            className="ml-auto flex items-center gap-2 px-3 py-1 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
+                            className="ml-auto flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/50 rounded-lg transition-colors"
                         >
                             <RefreshCw className="w-4 h-4" />
                             Erneut versuchen
@@ -289,10 +289,10 @@ function App() {
                 )}
 
                 {/* Footer Info */}
-                <div className="mt-6 text-center text-sm text-slate-400">
+                <div className="mt-6 text-center text-sm text-slate-400 dark:text-slate-500">
                     <p>
                         {editMode && Object.keys(pendingChanges).length > 0 && (
-                            <span className="text-amber-600 font-medium">
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">
                                 {Object.keys(pendingChanges).length} ungespeicherte Änderung(en) •{' '}
                             </span>
                         )}
