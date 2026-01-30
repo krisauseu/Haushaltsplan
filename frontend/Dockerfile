@@ -19,6 +19,9 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 ENV VITE_API_URL=$VITE_API_URL
 
+# Debug: Print env vars (will be visible in build logs)
+RUN echo "Vite Build Vars: URL=$VITE_SUPABASE_URL KEY=${VITE_SUPABASE_ANON_KEY:0:5}..."
+
 RUN npm run build
 
 # Production stage

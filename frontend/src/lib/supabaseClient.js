@@ -14,4 +14,8 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_AP
 const projectUrl = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+if (!projectUrl || !anonKey) {
+    console.error('Missing Supabase configuration:', { projectUrl, anonKey });
+}
+
 export const supabase = createClient(projectUrl, anonKey);
