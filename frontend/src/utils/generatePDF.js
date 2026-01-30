@@ -63,15 +63,9 @@ export async function generatePDF(year) {
             currentY += 5;
         }
 
-        // Capture Budget Table
+        // Capture Budget Table - let captureElementToPDF handle pagination
         const budgetTable = document.querySelector('[data-pdf-budget-table]');
         if (budgetTable) {
-            // Check if we need a new page for the table
-            if (currentY > pageHeight * 0.5) {
-                pdf.addPage();
-                currentY = margin;
-                currentY = addPDFHeader(pdf, year, margin, pageWidth, currentY, true);
-            }
             await captureElementToPDF(pdf, budgetTable, margin, currentY, contentWidth, pageHeight);
         }
 
