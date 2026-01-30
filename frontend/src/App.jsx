@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
+import TabNav from './components/TabNav';
 import SummaryCards from './components/SummaryCards';
 import BudgetTable from './components/BudgetTable';
+import AnalysisPage from './components/AnalysisPage';
 import {
     getValuesByYear,
     getSummary,
@@ -23,6 +25,7 @@ function App() {
     const [error, setError] = useState(null);
     const [saving, setSaving] = useState(false);
     const [autoFillFlash, setAutoFillFlash] = useState(null); // { categoryId, timestamp }
+    const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'analysis'
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -226,21 +229,40 @@ function App() {
                     </div>
                 )}
 
-                <SummaryCards summary={summary} loading={loading} />
-
-                <BudgetTable
-                    data={data}
-                    summary={summary}
-                    editMode={editMode}
-                    onChange={handleValueChange}
-                    loading={loading}
-                    year={year}
-                    onAddCategory={handleAddCategory}
-                    onUpdateCategory={handleUpdateCategory}
-                    onDeleteCategory={handleDeleteCategory}
-                    onAutoFill={handleAutoFill}
-                    autoFillFlash={autoFillFlash}
+                {/* Tab Navigation */}
+                <TabNav
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    disabled={loading || saving}
                 />
+
+                {/* Content based on active tab */}
+                {activeTab === 'overview' ? (
+                    <>
+                        <SummaryCards summary={summary} loading={loading} />
+
+                        <BudgetTable
+                            data={data}
+                            summary={summary}
+                            editMode={editMode}
+                            onChange={handleValueChange}
+                            loading={loading}
+                            year={year}
+                            onAddCategory={handleAddCategory}
+                            onUpdateCategory={handleUpdateCategory}
+                            onDeleteCategory={handleDeleteCategory}
+                            onAutoFill={handleAutoFill}
+                            autoFillFlash={autoFillFlash}
+                        />
+                    </>
+                ) : (
+                    <AnalysisPage
+                        data={data}
+                        summary={summary}
+                        year={year}
+                        loading={loading}
+                    />
+                )}
 
                 {/* Footer Info */}
                 <div className="mt-6 text-center text-sm text-slate-400">
