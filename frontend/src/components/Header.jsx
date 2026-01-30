@@ -1,5 +1,7 @@
 import { ChevronLeft, ChevronRight, Edit3, Save, X, Wallet, FileDown, Loader2, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { LogOut, User } from 'lucide-react';
 
 export default function Header({
     year,
@@ -14,6 +16,7 @@ export default function Header({
     isExporting
 }) {
     const { isDark, toggleTheme } = useTheme();
+    const { user, signOut } = useAuth();
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
 
@@ -64,6 +67,28 @@ export default function Header({
                         <ChevronRight className="w-5 h-5" />
                     </button>
                 </div>
+
+                {/* User Info */}
+                {user && (
+                    <div className="flex items-center gap-3 bg-white dark:bg-slate-800 py-1.5 px-3 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm" data-pdf-hide>
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                <User className="w-4 h-4" />
+                            </div>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 hidden md:block">
+                                {user.email}
+                            </span>
+                        </div>
+                        <div className="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+                        <button
+                            onClick={signOut}
+                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 hover:text-red-500 transition-colors"
+                            title="Abmelden"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
 
                 {/* Edit Mode Controls */}
                 <div className="flex items-center gap-2" data-pdf-hide>

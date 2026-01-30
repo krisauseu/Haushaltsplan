@@ -17,6 +17,7 @@ Eine moderne Full-Stack Web-Anwendung zur Verwaltung von Haushaltsbudgets mit Su
 - 🌙 **Dark Mode** - Umschaltbarer Dark/Light Mode mit System-Präferenz-Erkennung
 - 🎨 **Farbkodierung** - Grün für positive, Rot für negative Salden
 - ☁️ **Supabase** Cloud-Datenbank für sichere Speicherung
+- 🔒 **Auth & RLS** - Sichere Benutzeranmeldung & Row Level Security (Jeder sieht nur seine Daten)
 - 🐳 **Docker-ready** für einfaches Deployment
 - 📱 **Responsive Design** für Desktop und Tablet
 
@@ -38,11 +39,13 @@ git clone https://github.com/krisauseu/Haushaltsplan.git
 cd Haushaltsplan
 ```
 
-### 2. Supabase einrichten
+### 2. Supabase & Auth einrichten
 
 1. Erstelle ein Projekt auf [supabase.com](https://supabase.com)
-2. Führe das SQL-Schema aus `backend/db/init.sql` im Supabase SQL-Editor aus
-3. Kopiere deine Supabase-Credentials
+2. Führe das Init-Schema aus `backend/db/init.sql` im Supabase SQL-Editor aus
+3. Führe das Auth-Migrations-Skript aus `backend/db/migration_add_auth_rls.sql` aus (User Tabellen & RLS)
+4. Kopiere deine Supabase-Credentials
+
 
 ### 3. Umgebungsvariablen konfigurieren
 
@@ -54,6 +57,11 @@ Inhalt der `.env`:
 ```env
 SUPABASE_URL=https://dein-projekt.supabase.co
 SUPABASE_ANON_KEY=dein_anon_key
+# Frontend benötigt diese auch mit VITE_ Prefix:
+VITE_SUPABASE_URL=https://dein-projekt.supabase.co
+VITE_SUPABASE_ANON_KEY=dein_anon_key
+VITE_API_URL=http://localhost:3001/api
+
 ```
 
 ### 4. Container starten

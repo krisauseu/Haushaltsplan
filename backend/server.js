@@ -6,23 +6,50 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Supabase Client
+// Supabase Configuration
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.send('Haushaltsplan Backend is running. Please access the frontend at http://localhost:5173');
+});
+
+// Auth Middleware & Supabase Client Factory
+app.use((req, res, next) => {
+  // Get token from header
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token) {
+    // Create authenticated client for this request
+    req.supabase = createClient(supabaseUrl, supabaseKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    });
+  } else {
+    // Fallback to anonymous client (will likely be blocked by RLS)
+    req.supabase = createClient(supabaseUrl, supabaseKey);
+  }
+  next();
+});
+
 // Health Check
 app.get('/api/health', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('categories').select('id').limit(1);
+    const { data, error } = await req.supabase.from('categories').select('id').limit(1);
     if (error) throw error;
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
   } catch (error) {
-    res.status(500).json({ status: 'unhealthy', error: error.message });
+    // Keep 200 OK for health check even if db is empty or RLS blocks
+    res.json({ status: 'healthy_but_unauthorized', error: error.message, timestamp: new Date().toISOString() });
   }
 });
 
@@ -33,7 +60,7 @@ app.get('/api/health', async (req, res) => {
 // Get all categories
 app.get('/api/categories', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('categories')
       .select('*')
       .order('type', { ascending: false })
@@ -51,7 +78,7 @@ app.get('/api/categories', async (req, res) => {
 app.post('/api/categories', async (req, res) => {
   const { name, type, is_fixed, display_order } = req.body;
   try {
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('categories')
       .insert([{ name, type, is_fixed: is_fixed ?? true, display_order: display_order ?? 0 }])
       .select()
@@ -70,7 +97,7 @@ app.put('/api/categories/:id', async (req, res) => {
   const { id } = req.params;
   const { name, type, is_fixed, display_order } = req.body;
   try {
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('categories')
       .update({ name, type, is_fixed, display_order })
       .eq('id', id)
@@ -92,7 +119,7 @@ app.put('/api/categories/:id', async (req, res) => {
 app.delete('/api/categories/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('categories')
       .delete()
       .eq('id', id)
@@ -119,7 +146,7 @@ app.get('/api/values/:year', async (req, res) => {
   const { year } = req.params;
   try {
     // Get all categories with their monthly values for the year
-    const { data: categories, error: catError } = await supabase
+    const { data: categories, error: catError } = await req.supabase
       .from('categories')
       .select('*')
       .order('type', { ascending: false })
@@ -127,7 +154,7 @@ app.get('/api/values/:year', async (req, res) => {
 
     if (catError) throw catError;
 
-    const { data: values, error: valError } = await supabase
+    const { data: values, error: valError } = await req.supabase
       .from('monthly_values')
       .select('*')
       .eq('year', parseInt(year));
@@ -162,7 +189,7 @@ app.get('/api/values/:year', async (req, res) => {
 app.put('/api/values', async (req, res) => {
   const { category_id, year, month, amount } = req.body;
   try {
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('monthly_values')
       .upsert(
         { category_id, year, month, amount },
@@ -183,7 +210,7 @@ app.put('/api/values', async (req, res) => {
 app.put('/api/values/batch', async (req, res) => {
   const { updates } = req.body;
   try {
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('monthly_values')
       .upsert(
         updates.map(u => ({
@@ -213,14 +240,14 @@ app.get('/api/summary/:year', async (req, res) => {
   const { year } = req.params;
   try {
     // Get all categories
-    const { data: categories, error: catError } = await supabase
+    const { data: categories, error: catError } = await req.supabase
       .from('categories')
       .select('*');
 
     if (catError) throw catError;
 
     // Get all monthly values for the year
-    const { data: values, error: valError } = await supabase
+    const { data: values, error: valError } = await req.supabase
       .from('monthly_values')
       .select('*')
       .eq('year', parseInt(year));

@@ -4,6 +4,8 @@ import TabNav from './components/TabNav';
 import SummaryCards from './components/SummaryCards';
 import BudgetTable from './components/BudgetTable';
 import AnalysisPage from './components/AnalysisPage';
+import LoginPage from './components/LoginPage';
+import { useAuth } from './context/AuthContext';
 import {
     getValuesByYear,
     getSummary,
@@ -13,10 +15,11 @@ import {
     updateCategory,
     deleteCategory
 } from './api/budgetApi';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 import generatePDF from './utils/generatePDF';
 
 function App() {
+    const { user, loading: authLoading } = useAuth();
     const [year, setYear] = useState(new Date().getFullYear());
     const [data, setData] = useState([]);
     const [summary, setSummary] = useState(null);
@@ -30,6 +33,7 @@ function App() {
     const [isExporting, setIsExporting] = useState(false);
 
     const fetchData = useCallback(async () => {
+        if (!user) return;
         setLoading(true);
         setError(null);
         try {
@@ -45,11 +49,23 @@ function App() {
         } finally {
             setLoading(false);
         }
-    }, [year]);
+    }, [year, user]);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    if (authLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+        );
+    }
+
+    if (!user) {
+        return <LoginPage />;
+    }
 
     const handleYearChange = (newYear) => {
         if (Object.keys(pendingChanges).length > 0) {
