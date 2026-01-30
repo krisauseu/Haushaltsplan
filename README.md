@@ -1,15 +1,13 @@
 # Haushaltsplan - Budget Planner
 
-Eine moderne Full-Stack Web-Anwendung zur Verwaltung von Haushaltsbudgets, optimiert für Self-Hosting auf Unraid.
-
-![Budget Table](https://via.placeholder.com/800x400?text=Haushaltsplan+Dashboard)
+Eine moderne Full-Stack Web-Anwendung zur Verwaltung von Haushaltsbudgets mit Supabase Backend.
 
 ## Features
 
 - 📊 **Übersichtliche Tabelle** mit allen 12 Monaten + Jahressumme
 - ✏️ **Edit-Mode** zum schnellen Ändern von Beträgen
 - 🎨 **Farbkodierung** - Grün für positive, Rot für negative Salden
-- 💾 **PostgreSQL** Datenbank für permanente Speicherung
+- ☁️ **Supabase** Cloud-Datenbank für sichere Speicherung
 - 🐳 **Docker-ready** für einfaches Deployment
 - 📱 **Responsive Design** für Desktop und Tablet
 
@@ -19,35 +17,37 @@ Eine moderne Full-Stack Web-Anwendung zur Verwaltung von Haushaltsbudgets, optim
 |-------|-------------|
 | Frontend | React 18, Vite, Tailwind CSS, Lucide Icons |
 | Backend | Node.js 20, Express.js |
-| Datenbank | PostgreSQL 16 |
+| Datenbank | Supabase (PostgreSQL) |
 | Deployment | Docker, docker-compose |
 
 ## Schnellstart
 
-### 1. Repository klonen / Dateien kopieren
+### 1. Repository klonen
 
 ```bash
-# Auf Unraid: Kopiere den Ordner nach /mnt/user/appdata/haushaltsplan
-cd /mnt/user/appdata/haushaltsplan
+git clone https://github.com/krisauseu/Haushaltsplan.git
+cd Haushaltsplan
 ```
 
-### 2. Umgebungsvariablen konfigurieren
+### 2. Supabase einrichten
+
+1. Erstelle ein Projekt auf [supabase.com](https://supabase.com)
+2. Führe das SQL-Schema aus `backend/db/init.sql` im Supabase SQL-Editor aus
+3. Kopiere deine Supabase-Credentials
+
+### 3. Umgebungsvariablen konfigurieren
 
 ```bash
-# .env Datei erstellen
 cp .env.example .env
-
-# Passwort ändern (WICHTIG!)
-nano .env
 ```
 
 Inhalt der `.env`:
 ```env
-DB_USER=haushaltsplan
-DB_PASSWORD=dein_sicheres_passwort_hier
+SUPABASE_URL=https://dein-projekt.supabase.co
+SUPABASE_ANON_KEY=dein_anon_key
 ```
 
-### 3. Container starten
+### 4. Container starten
 
 ```bash
 # Alle Container bauen und starten
@@ -57,11 +57,10 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-### 4. App öffnen
+### 5. App öffnen
 
 - **Lokal:** http://localhost:3000
-- **Unraid:** http://[UNRAID-IP]:3000
-- **Tailscale:** http://[TAILSCALE-IP]:3000
+- **Server:** http://[SERVER-IP]:3000
 
 ## Ports
 
@@ -69,7 +68,6 @@ docker-compose logs -f
 |---------|------|--------------|
 | Frontend | 3000 | Nginx Web-Server |
 | Backend | 3001 | REST API |
-| PostgreSQL | 5432 | Nur intern (nicht exposed) |
 
 ## API Endpoints
 
@@ -82,22 +80,8 @@ docker-compose logs -f
 | DELETE | `/api/categories/:id` | Kategorie löschen |
 | GET | `/api/values/:year` | Monatswerte für Jahr |
 | PUT | `/api/values` | Einzelwert speichern |
+| PUT | `/api/values/batch` | Mehrere Werte speichern |
 | GET | `/api/summary/:year` | Jahresübersicht |
-
-## Datensicherung
-
-Die PostgreSQL-Daten werden in einem Docker Volume gespeichert:
-- Volume-Name: `haushaltsplan-postgres-data`
-
-### Backup erstellen
-```bash
-docker exec haushaltsplan-db pg_dump -U haushaltsplan haushaltsplan > backup.sql
-```
-
-### Backup wiederherstellen
-```bash
-cat backup.sql | docker exec -i haushaltsplan-db psql -U haushaltsplan haushaltsplan
-```
 
 ## Entwicklung
 
@@ -107,7 +91,7 @@ cat backup.sql | docker exec -i haushaltsplan-db psql -U haushaltsplan haushalts
 # Backend starten
 cd backend
 npm install
-DATABASE_URL=postgresql://user:pass@localhost:5432/haushaltsplan npm run dev
+npm run dev
 
 # Frontend starten (neues Terminal)
 cd frontend
@@ -116,6 +100,7 @@ npm run dev
 ```
 
 ### Container neu bauen
+
 ```bash
 docker-compose build --no-cache
 docker-compose up -d
