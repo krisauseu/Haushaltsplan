@@ -3,6 +3,7 @@ import html2canvas from 'html2canvas';
 
 /**
  * Generate a PDF report of the Haushaltsplan
+ * Exports the currently visible content based on active tab
  * @param {number} year - The year for the report
  * @returns {Promise<void>}
  */
@@ -18,7 +19,7 @@ export async function generatePDF(year) {
     const pageHeight = pdf.internal.pageSize.getHeight(); // 210mm
     const margin = 10;
     const contentWidth = pageWidth - (margin * 2);
-    const headerHeight = 20;
+    const headerHeight = 18;
     const usableHeight = pageHeight - margin - headerHeight - 5;
 
     // Store current theme and force light mode for PDF
@@ -45,39 +46,11 @@ export async function generatePDF(year) {
         el.style.display = 'none';
     });
 
-    // Store and fix position of off-screen elements (they're rendered but positioned off-screen during export)
-    const analysisSection = document.querySelector('[data-pdf-analysis]');
-    const budgetTableWrapper = analysisSection?.parentElement?.previousElementSibling;
-    const budgetTable = document.querySelector('[data-pdf-budget-table]');
-
-    const offscreenElements = [];
-
-    // Move off-screen elements back into view temporarily for capture
-    [analysisSection?.parentElement, budgetTableWrapper].filter(Boolean).forEach(el => {
-        if (el && el.style.position === 'absolute' && el.style.left === '-9999px') {
-            offscreenElements.push({
-                element: el,
-                originalStyle: {
-                    position: el.style.position,
-                    left: el.style.left,
-                    top: el.style.top
-                }
-            });
-            // Make it visible but off the visible page (we'll use scrollWidth/Height)
-            el.style.position = 'fixed';
-            el.style.left = '0';
-            el.style.top = '0';
-            el.style.zIndex = '-1';
-            el.style.opacity = '0';
-            el.style.pointerEvents = 'none';
-        }
-    });
-
     // Prepare elements with special PDF styling
     const pdfStyleOverrides = [];
 
-    // Remove truncate from legend items for full text visibility
-    const truncateElements = document.querySelectorAll('[data-pdf-analysis] .truncate');
+    // Remove truncate and overflow restrictions for full text visibility
+    const truncateElements = document.querySelectorAll('.truncate, .text-ellipsis');
     truncateElements.forEach(el => {
         pdfStyleOverrides.push({
             element: el,
@@ -88,14 +61,14 @@ export async function generatePDF(year) {
                 textOverflow: el.style.textOverflow
             }
         });
-        el.classList.remove('truncate');
+        el.classList.remove('truncate', 'text-ellipsis');
         el.style.overflow = 'visible';
         el.style.whiteSpace = 'normal';
         el.style.textOverflow = 'clip';
     });
 
     // Make overflow elements visible
-    const overflowElements = document.querySelectorAll('[data-pdf-analysis] .overflow-y-auto, [data-pdf-analysis] .overflow-hidden, [data-pdf-analysis] .max-h-56');
+    const overflowElements = document.querySelectorAll('.overflow-y-auto, .overflow-hidden, .max-h-56, [data-pdf-legend]');
     overflowElements.forEach(el => {
         pdfStyleOverrides.push({
             element: el,
@@ -111,24 +84,24 @@ export async function generatePDF(year) {
     });
 
     // Small delay to let styles recalculate
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    let pageCount = 0;
 
     try {
-        // --- PAGE 1: Analysis Section (QuickStats + Charts) ---
-        if (analysisSection) {
-            // Temporarily make it fully visible for capture
-            const parent = analysisSection.parentElement;
-            const wasHidden = parent && parent.style.opacity === '0';
-            if (wasHidden) {
-                parent.style.opacity = '1';
-                parent.style.position = 'static';
-                parent.style.zIndex = 'auto';
-            }
+        // Check which sections are currently visible (not off-screen)
+        const analysisSection = document.querySelector('[data-pdf-analysis]');
+        const budgetTable = document.querySelector('[data-pdf-budget-table]');
+        const summaryCards = document.querySelector('[data-pdf-summary-cards]');
 
-            await new Promise(resolve => setTimeout(resolve, 100));
+        // Determine which content is actually visible
+        const isAnalysisVisible = analysisSection && isElementVisible(analysisSection);
+        const isOverviewVisible = budgetTable && isElementVisible(budgetTable);
 
-            // Add header to page 1
-            addPDFHeader(pdf, year, margin, pageWidth, margin);
+        // --- Capture Analysis Section if visible ---
+        if (isAnalysisVisible) {
+            if (pageCount > 0) pdf.addPage();
+            addPDFHeader(pdf, year, margin, pageWidth, margin, false, 'Analyse');
 
             const canvas = await html2canvas(analysisSection, {
                 scale: 2,
@@ -139,7 +112,7 @@ export async function generatePDF(year) {
                 onclone: (clonedDoc, clonedElement) => {
                     clonedElement.style.backgroundColor = '#f8fafc';
                     // Ensure all text is visible in clone
-                    clonedElement.querySelectorAll('.truncate').forEach(el => {
+                    clonedElement.querySelectorAll('.truncate, .text-ellipsis').forEach(el => {
                         el.style.overflow = 'visible';
                         el.style.whiteSpace = 'normal';
                         el.style.textOverflow = 'clip';
@@ -151,47 +124,17 @@ export async function generatePDF(year) {
                 }
             });
 
-            if (wasHidden) {
-                parent.style.opacity = '0';
-                parent.style.position = 'fixed';
-                parent.style.zIndex = '-1';
-            }
-
-            // Calculate dimensions to fit within page
-            const startY = margin + headerHeight + 5;
-            const availableHeight = usableHeight;
-
-            const aspectRatio = canvas.width / canvas.height;
-            let imgWidth = contentWidth;
-            let imgHeight = imgWidth / aspectRatio;
-
-            if (imgHeight > availableHeight) {
-                imgHeight = availableHeight;
-                imgWidth = imgHeight * aspectRatio;
-            }
-
-            const xOffset = margin + (contentWidth - imgWidth) / 2;
-            const imgData = canvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', xOffset, startY, imgWidth, imgHeight);
+            addCanvasToPDF(pdf, canvas, margin, headerHeight, contentWidth, usableHeight);
+            pageCount++;
         }
 
-        // --- PAGE 2: Budget Table (Full Page) ---
-        if (budgetTable) {
-            // Temporarily make it fully visible for capture
-            const wrapper = budgetTable.parentElement?.parentElement;
-            const wasHidden = wrapper && wrapper.style.opacity === '0';
-            if (wasHidden) {
-                wrapper.style.opacity = '1';
-                wrapper.style.position = 'static';
-                wrapper.style.zIndex = 'auto';
-            }
+        // --- Capture Overview (Summary Cards + Budget Table) if visible ---
+        if (isOverviewVisible) {
+            // Capture Budget Table
+            if (pageCount > 0) pdf.addPage();
+            addPDFHeader(pdf, year, margin, pageWidth, margin, pageCount > 0, 'Budgettabelle');
 
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            pdf.addPage();
-            addPDFHeader(pdf, year, margin, pageWidth, margin, true);
-
-            const canvas = await html2canvas(budgetTable, {
+            const tableCanvas = await html2canvas(budgetTable, {
                 scale: 2,
                 useCORS: true,
                 logging: false,
@@ -204,47 +147,25 @@ export async function generatePDF(year) {
                 }
             });
 
-            if (wasHidden) {
-                wrapper.style.opacity = '0';
-                wrapper.style.position = 'fixed';
-                wrapper.style.zIndex = '-1';
-            }
+            addCanvasToPDF(pdf, tableCanvas, margin, headerHeight, contentWidth, usableHeight);
+            pageCount++;
+        }
 
-            const startY = margin + headerHeight;
-            const availableHeight = usableHeight + 5;
-
-            const aspectRatio = canvas.width / canvas.height;
-            let imgWidth = contentWidth;
-            let imgHeight = imgWidth / aspectRatio;
-
-            if (imgHeight > availableHeight) {
-                imgHeight = availableHeight;
-                imgWidth = imgHeight * aspectRatio;
-            }
-
-            const xOffset = margin + (contentWidth - imgWidth) / 2;
-            const imgData = canvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', xOffset, startY, imgWidth, imgHeight);
+        // If nothing was captured, show error
+        if (pageCount === 0) {
+            pdf.setFontSize(14);
+            pdf.text('Keine Inhalte zum Exportieren gefunden.', margin, 50);
         }
 
         // Generate filename with timestamp
         const timestamp = new Date().toISOString().slice(0, 10);
-        pdf.save(`Haushaltsplan_${year}_${timestamp}.pdf`);
+        const tabName = isAnalysisVisible ? 'Analyse' : 'Uebersicht';
+        pdf.save(`Haushaltsplan_${year}_${tabName}_${timestamp}.pdf`);
 
     } finally {
         // Restore hidden elements
         originalDisplayStyles.forEach(({ element, display }) => {
             element.style.display = display;
-        });
-
-        // Restore off-screen elements
-        offscreenElements.forEach(({ element, originalStyle }) => {
-            element.style.position = originalStyle.position;
-            element.style.left = originalStyle.left;
-            element.style.top = originalStyle.top;
-            element.style.zIndex = '';
-            element.style.opacity = '';
-            element.style.pointerEvents = '';
         });
 
         // Restore PDF style overrides
@@ -265,10 +186,59 @@ export async function generatePDF(year) {
 }
 
 /**
+ * Check if an element is actually visible (not positioned off-screen)
+ */
+function isElementVisible(element) {
+    if (!element) return false;
+
+    const style = window.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+
+    // Check if hidden or off-screen
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    if (style.opacity === '0') return false;
+    if (rect.left < -1000 || rect.top < -1000) return false;
+
+    // Check parent as well (for wrapper divs)
+    const parent = element.parentElement;
+    if (parent) {
+        const parentStyle = window.getComputedStyle(parent);
+        const parentRect = parent.getBoundingClientRect();
+        if (parentRect.left < -1000 || parentRect.top < -1000) return false;
+        if (parentStyle.opacity === '0') return false;
+    }
+
+    return true;
+}
+
+/**
+ * Add a canvas image to the PDF, scaled to fit
+ */
+function addCanvasToPDF(pdf, canvas, margin, headerHeight, contentWidth, usableHeight) {
+    const startY = margin + headerHeight + 3;
+    const availableHeight = usableHeight;
+
+    const aspectRatio = canvas.width / canvas.height;
+    let imgWidth = contentWidth;
+    let imgHeight = imgWidth / aspectRatio;
+
+    // If too tall, scale down to fit height
+    if (imgHeight > availableHeight) {
+        imgHeight = availableHeight;
+        imgWidth = imgHeight * aspectRatio;
+    }
+
+    // Center horizontally if scaled down
+    const xOffset = margin + (contentWidth - imgWidth) / 2;
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', xOffset, startY, imgWidth, imgHeight);
+}
+
+/**
  * Add styled header to PDF page
  */
-function addPDFHeader(pdf, year, margin, pageWidth, startY, isContinuation = false) {
-    const headerHeight = isContinuation ? 12 : 18;
+function addPDFHeader(pdf, year, margin, pageWidth, startY, isContinuation = false, sectionName = '') {
+    const headerHeight = 16;
 
     // Header background - dark blue
     pdf.setFillColor(30, 41, 59);
@@ -276,13 +246,13 @@ function addPDFHeader(pdf, year, margin, pageWidth, startY, isContinuation = fal
 
     // Title
     pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(isContinuation ? 11 : 14);
+    pdf.setFontSize(13);
     pdf.setFont('helvetica', 'bold');
 
-    const titleText = isContinuation
-        ? `Haushaltsplan ${year} - Budgettabelle`
+    const titleText = sectionName
+        ? `Haushaltsplan ${year} – ${sectionName}`
         : `Haushaltsplan Bericht ${year}`;
-    pdf.text(titleText, margin, startY + (isContinuation ? 7 : 11));
+    pdf.text(titleText, margin, startY + 10);
 
     // Date - right aligned
     const dateStr = new Date().toLocaleDateString('de-DE', {
@@ -295,12 +265,12 @@ function addPDFHeader(pdf, year, margin, pageWidth, startY, isContinuation = fal
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
     const dateWidth = pdf.getTextWidth(`Erstellt am: ${dateStr}`);
-    pdf.text(`Erstellt am: ${dateStr}`, pageWidth - margin - dateWidth, startY + (isContinuation ? 7 : 11));
+    pdf.text(`Erstellt am: ${dateStr}`, pageWidth - margin - dateWidth, startY + 10);
 
     // Reset text color
     pdf.setTextColor(0, 0, 0);
 
-    return startY + headerHeight + 5;
+    return startY + headerHeight + 3;
 }
 
 export default generatePDF;

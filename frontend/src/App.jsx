@@ -271,9 +271,8 @@ function App() {
                 </div>
 
                 {/* Content based on active tab */}
-                {/* During PDF export, render both sections (one hidden) so PDF can capture both */}
-                {(activeTab === 'overview' || isExporting) && (
-                    <div style={isExporting && activeTab !== 'overview' ? { position: 'absolute', left: '-9999px', top: 0 } : {}}>
+                {activeTab === 'overview' ? (
+                    <>
                         <div data-pdf-summary-cards>
                             <SummaryCards summary={summary} loading={loading} />
                         </div>
@@ -293,14 +292,9 @@ function App() {
                                 autoFillFlash={autoFillFlash}
                             />
                         </div>
-                    </div>
-                )}
-
-                {(activeTab === 'analysis' || isExporting) && (
-                    <div
-                        data-pdf-analysis
-                        style={isExporting && activeTab !== 'analysis' ? { position: 'absolute', left: '-9999px', top: 0 } : {}}
-                    >
+                    </>
+                ) : (
+                    <div data-pdf-analysis>
                         <AnalysisPage
                             data={data}
                             summary={summary}
