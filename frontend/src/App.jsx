@@ -14,6 +14,7 @@ import {
     deleteCategory
 } from './api/budgetApi';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import generatePDF from './utils/generatePDF';
 
 function App() {
     const [year, setYear] = useState(new Date().getFullYear());
@@ -26,6 +27,7 @@ function App() {
     const [saving, setSaving] = useState(false);
     const [autoFillFlash, setAutoFillFlash] = useState(null); // { categoryId, timestamp }
     const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'analysis'
+    const [isExporting, setIsExporting] = useState(false);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -201,6 +203,18 @@ function App() {
         }
     };
 
+    const handleExportPDF = async () => {
+        setIsExporting(true);
+        try {
+            await generatePDF(year);
+        } catch (err) {
+            console.error('Error generating PDF:', err);
+            setError('Fehler beim Erstellen des PDFs.');
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-4 md:p-6 lg:p-8">
             <div className="max-w-[1800px] mx-auto">
@@ -213,6 +227,8 @@ function App() {
                     onCancel={handleCancel}
                     hasChanges={Object.keys(pendingChanges).length > 0}
                     loading={loading || saving}
+                    onExportPDF={handleExportPDF}
+                    isExporting={isExporting}
                 />
 
                 {error && (
@@ -230,38 +246,46 @@ function App() {
                 )}
 
                 {/* Tab Navigation */}
-                <TabNav
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                    disabled={loading || saving}
-                />
+                <div data-tab-nav data-pdf-hide>
+                    <TabNav
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        disabled={loading || saving}
+                    />
+                </div>
 
                 {/* Content based on active tab */}
                 {activeTab === 'overview' ? (
                     <>
-                        <SummaryCards summary={summary} loading={loading} />
+                        <div data-pdf-summary-cards>
+                            <SummaryCards summary={summary} loading={loading} />
+                        </div>
 
-                        <BudgetTable
-                            data={data}
-                            summary={summary}
-                            editMode={editMode}
-                            onChange={handleValueChange}
-                            loading={loading}
-                            year={year}
-                            onAddCategory={handleAddCategory}
-                            onUpdateCategory={handleUpdateCategory}
-                            onDeleteCategory={handleDeleteCategory}
-                            onAutoFill={handleAutoFill}
-                            autoFillFlash={autoFillFlash}
-                        />
+                        <div data-pdf-budget-table>
+                            <BudgetTable
+                                data={data}
+                                summary={summary}
+                                editMode={editMode}
+                                onChange={handleValueChange}
+                                loading={loading}
+                                year={year}
+                                onAddCategory={handleAddCategory}
+                                onUpdateCategory={handleUpdateCategory}
+                                onDeleteCategory={handleDeleteCategory}
+                                onAutoFill={handleAutoFill}
+                                autoFillFlash={autoFillFlash}
+                            />
+                        </div>
                     </>
                 ) : (
-                    <AnalysisPage
-                        data={data}
-                        summary={summary}
-                        year={year}
-                        loading={loading}
-                    />
+                    <div data-pdf-analysis>
+                        <AnalysisPage
+                            data={data}
+                            summary={summary}
+                            year={year}
+                            loading={loading}
+                        />
+                    </div>
                 )}
 
                 {/* Footer Info */}

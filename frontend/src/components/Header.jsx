@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Edit3, Save, X, Wallet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit3, Save, X, Wallet, FileDown, Loader2 } from 'lucide-react';
 
 export default function Header({
     year,
@@ -8,7 +8,9 @@ export default function Header({
     onSave,
     onCancel,
     hasChanges,
-    loading
+    loading,
+    onExportPDF,
+    isExporting
 }) {
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
@@ -62,7 +64,28 @@ export default function Header({
                 </div>
 
                 {/* Edit Mode Controls */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" data-pdf-hide>
+                    {/* PDF Export Button */}
+                    <button
+                        onClick={onExportPDF}
+                        disabled={loading || isExporting}
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-slate-600 to-slate-700 
+                         hover:from-slate-700 hover:to-slate-800 text-white rounded-xl font-medium 
+                         shadow-lg shadow-slate-500/25 transition-all disabled:opacity-50"
+                    >
+                        {isExporting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Wird erstellt...
+                            </>
+                        ) : (
+                            <>
+                                <FileDown className="w-4 h-4" />
+                                PDF Export
+                            </>
+                        )}
+                    </button>
+
                     {editMode ? (
                         <>
                             <button
