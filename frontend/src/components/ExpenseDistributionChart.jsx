@@ -74,7 +74,7 @@ export default function ExpenseDistributionChart({ data, loading, selectedMonth 
     const renderLegend = (props) => {
         const { payload } = props;
         return (
-            <div className="max-h-56 overflow-y-auto pr-2">
+            <div className="max-h-56 overflow-y-auto pr-2" data-pdf-legend>
                 <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                     {payload.map((entry, index) => (
                         <li key={`legend-${index}`} className="flex items-center gap-1.5">
@@ -82,7 +82,7 @@ export default function ExpenseDistributionChart({ data, loading, selectedMonth 
                                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: entry.color }}
                             />
-                            <span className="text-slate-600 dark:text-slate-400 truncate" title={entry.value}>
+                            <span className="text-slate-600 dark:text-slate-400 text-ellipsis overflow-hidden" title={entry.value}>
                                 {entry.value}
                             </span>
                         </li>
