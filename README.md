@@ -11,6 +11,7 @@ Eine moderne Full-Stack Web-Anwendung zur Verwaltung von Haushaltsbudgets mit Su
   - Doughnut-Chart für Ausgaben-Verteilung pro Kategorie
   - Trend-Chart (Einnahmen vs. Ausgaben im Jahresverlauf)
   - Quick-Stats: Sparrate, Ø Überschuss, teuerste Kategorie
+- 📄 **PDF Export** - Jahresbericht als professionelles PDF herunterladen
 - 🎨 **Farbkodierung** - Grün für positive, Rot für negative Salden
 - ☁️ **Supabase** Cloud-Datenbank für sichere Speicherung
 - 🐳 **Docker-ready** für einfaches Deployment
@@ -20,7 +21,7 @@ Eine moderne Full-Stack Web-Anwendung zur Verwaltung von Haushaltsbudgets mit Su
 
 | Layer | Technologie |
 |-------|-------------|
-| Frontend | React 18, Vite, Tailwind CSS, Recharts, Lucide Icons |
+| Frontend | React 18, Vite, Tailwind CSS, Recharts, Lucide Icons, jsPDF, html2canvas |
 | Backend | Node.js 20, Express.js |
 | Datenbank | Supabase (PostgreSQL) |
 | Deployment | Docker, docker-compose |
