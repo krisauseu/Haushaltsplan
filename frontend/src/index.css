@@ -44,3 +44,13 @@ body {
 .smooth-transition {
   @apply transition-all duration-200 ease-in-out;
 }
+
+/* Auto-Fill Success Animation */
+@keyframes autoFillFlash {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgb(134, 239, 172); }
+}
+
+.auto-fill-flash {
+  animation: autoFillFlash 0.6s ease-out;
+}

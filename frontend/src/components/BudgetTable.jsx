@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, Pencil, Trash2, Plus, Check, X } from 'lucide-react';
+import { Loader2, Pencil, Trash2, Plus, Check, X, CopyCheck } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 
 const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
@@ -13,7 +13,9 @@ export default function BudgetTable({
     year,
     onAddCategory,
     onUpdateCategory,
-    onDeleteCategory
+    onDeleteCategory,
+    onAutoFill,
+    autoFillFlash
 }) {
     const [editingCategory, setEditingCategory] = useState(null);
     const [editingName, setEditingName] = useState('');
@@ -171,21 +173,36 @@ export default function BudgetTable({
 
     const renderValueCell = (category, month) => {
         const value = getValueForMonth(category, month);
+        const isFlashing = autoFillFlash?.categoryId === category.category_id;
 
         if (editMode) {
             return (
-                <input
-                    type="text"
-                    defaultValue={value !== 0 ? value.toFixed(2).replace('.', ',') : ''}
-                    onBlur={(e) => handleValueChange(category.category_id, month, e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            e.target.blur();
-                        }
-                    }}
-                    className="value-input w-20"
-                    placeholder="-"
-                />
+                <div className="flex items-center justify-end gap-1 group/cell">
+                    <input
+                        type="text"
+                        defaultValue={value !== 0 ? value.toFixed(2).replace('.', ',') : ''}
+                        onBlur={(e) => handleValueChange(category.category_id, month, e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.target.blur();
+                            }
+                        }}
+                        className={`value-input w-20 ${isFlashing ? 'auto-fill-flash' : ''}`}
+                        placeholder="-"
+                    />
+                    <button
+                        onClick={(e) => {
+                            const input = e.currentTarget.previousElementSibling;
+                            const inputVal = input?.value || '';
+                            onAutoFill(category.category_id, parseCurrency(inputVal) || value);
+                        }}
+                        className="auto-fill-btn p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-100 
+                                   rounded transition-colors opacity-0 group-hover/cell:opacity-100"
+                        title="Wert auf alle Monate übertragen"
+                    >
+                        <CopyCheck className="w-3.5 h-3.5" />
+                    </button>
+                </div>
             );
         }
 

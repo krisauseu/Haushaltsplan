@@ -6,6 +6,7 @@ import {
     getValuesByYear,
     getSummary,
     updateValue,
+    batchUpdateValues,
     createCategory,
     updateCategory,
     deleteCategory
@@ -21,6 +22,7 @@ function App() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [autoFillFlash, setAutoFillFlash] = useState(null); // { categoryId, timestamp }
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -151,6 +153,38 @@ function App() {
         }
     };
 
+    // Auto-Fill handler: copies value to all 12 months
+    const handleAutoFill = async (categoryId, amount) => {
+        // Build updates for all 12 months
+        const updates = [];
+        for (let month = 1; month <= 12; month++) {
+            const key = `${categoryId}-${month}`;
+            updates.push({ category_id: categoryId, year, month, amount });
+            setPendingChanges(prev => ({
+                ...prev,
+                [key]: { category_id: categoryId, year, month, amount }
+            }));
+        }
+
+        // Update local data immediately for all months
+        setData(prevData =>
+            prevData.map(category => {
+                if (category.category_id !== categoryId) return category;
+                return {
+                    ...category,
+                    monthly_values: Array.from({ length: 12 }, (_, i) => ({
+                        month: i + 1,
+                        amount
+                    }))
+                };
+            })
+        );
+
+        // Trigger flash animation
+        setAutoFillFlash({ categoryId, timestamp: Date.now() });
+        setTimeout(() => setAutoFillFlash(null), 600);
+    };
+
     const handleDeleteCategory = async (categoryId) => {
         setSaving(true);
         try {
@@ -204,6 +238,8 @@ function App() {
                     onAddCategory={handleAddCategory}
                     onUpdateCategory={handleUpdateCategory}
                     onDeleteCategory={handleDeleteCategory}
+                    onAutoFill={handleAutoFill}
+                    autoFillFlash={autoFillFlash}
                 />
 
                 {/* Footer Info */}
