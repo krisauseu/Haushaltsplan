@@ -30,6 +30,14 @@ Eine moderne Full-Stack Web-Anwendung zur Verwaltung von Haushaltsbudgets mit Su
 | Datenbank | Supabase (PostgreSQL) |
 | Deployment | Docker, docker-compose |
 
+## Demo
+
+🌐 **Live-Demo:** [https://fin.feichti.dev](https://fin.feichti.dev)
+
+![Haushaltsplan Dashboard](demo.png)
+
+![Haushaltsplan Analyse](demo2.png)
+
 ## Schnellstart
 
 ### 1. Repository klonen
