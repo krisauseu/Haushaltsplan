@@ -130,6 +130,26 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
+## Demo-Benutzer
+
+Für Demos oder zum Testen kann ein Demo-Benutzer mit Beispieldaten erstellt werden:
+
+1. In Supabase: **Authentication > Users > Add user**
+   - E-Mail: `demo@haushaltsplan.de`
+   - Passwort: `demo1234`
+   - ✅ Auto Confirm User
+
+2. Kopiere die UUID des erstellten Benutzers
+
+3. Öffne `backend/db/demo_user_data.sql`, ersetze `<DEMO_USER_UUID>` mit der echten UUID
+
+4. Führe das Skript im SQL Editor aus
+
+Der Demo-Benutzer hat dann realistische Beispieldaten für das aktuelle Jahr:
+- 3 Einnahme-Kategorien (Gehalt, Nebenjob, Kindergeld)
+- 7 Feste Ausgaben (Miete, Strom, etc.)
+- 5 Variable Ausgaben (Lebensmittel, Transport, etc.)
+
 ## Lizenz
 
 MIT License
