@@ -213,7 +213,7 @@ export default function BudgetTable({
         );
     };
 
-    const renderCategoryNameCell = (category, bgClass = 'bg-white dark:bg-slate-900') => {
+    const renderCategoryNameCell = (category, bgClass = 'bg-white dark:bg-slate-800/50') => {
         const isEditing = editingCategory === category.category_id;
 
         if (isEditing) {
@@ -277,11 +277,11 @@ export default function BudgetTable({
         );
     };
 
-    const renderSectionHeader = (title, bgColor) => (
+    const renderSectionHeader = (title, bgColor, darkBgColor) => (
         <tr>
             <td
                 colSpan={14}
-                className={`${bgColor} font-semibold text-sm py-2 px-4 sticky left-0`}
+                className={`${bgColor} ${darkBgColor} font-semibold text-sm py-2 px-4 sticky left-0`}
             >
                 {title}
             </td>
@@ -295,7 +295,7 @@ export default function BudgetTable({
 
         if (isAdding) {
             return (
-                <tr className="border-b border-slate-100 dark:border-slate-800">
+                <tr className="border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/30">
                     <td className="py-2 px-4 sticky left-0 bg-white dark:bg-slate-900 z-10">
                         <div className="flex items-center gap-2">
                             <input
@@ -333,7 +333,7 @@ export default function BudgetTable({
         }
 
         return (
-            <tr className="border-b border-slate-100 dark:border-slate-800">
+            <tr className="border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/30">
                 <td className="py-2 px-4 sticky left-0 bg-white dark:bg-slate-900 z-10">
                     <button
                         onClick={() => handleStartAdd(sectionType)}
@@ -349,20 +349,20 @@ export default function BudgetTable({
         );
     };
 
-    const renderTotalRow = (title, getMonthlyValue, getYearlyValue, bgColor, textColor = '') => (
-        <tr className={`${bgColor} font-semibold`}>
-            <td className={`py-2 px-4 sticky left-0 ${bgColor} ${textColor}`}>
+    const renderTotalRow = (title, getMonthlyValue, getYearlyValue, bgColor, darkBgColor, textColor = '', darkTextColor = '') => (
+        <tr className={`${bgColor} ${darkBgColor} font-semibold`}>
+            <td className={`py-2 px-4 sticky left-0 ${bgColor} ${darkBgColor} ${textColor} ${darkTextColor}`}>
                 {title}
             </td>
             {MONTHS.map((_, idx) => {
                 const value = getMonthlyValue(idx + 1);
                 return (
-                    <td key={idx} className={`py-2 px-2 text-right ${textColor}`}>
+                    <td key={idx} className={`py-2 px-2 text-right ${textColor} ${darkTextColor}`}>
                         {formatCurrency(value, true)}
                     </td>
                 );
             })}
-            <td className={`py-2 px-4 text-right font-bold ${textColor}`}>
+            <td className={`py-2 px-4 text-right font-bold ${textColor} ${darkTextColor}`}>
                 {formatCurrency(getYearlyValue(), true)}
             </td>
         </tr>
@@ -418,10 +418,10 @@ export default function BudgetTable({
                         </thead>
                         <tbody>
                             {/* EINNAHMEN Section */}
-                            {renderSectionHeader('Einnahmen', 'bg-green-200 text-green-900')}
+                            {renderSectionHeader('Einnahmen', 'bg-green-200 text-green-900', 'dark:bg-green-900/40 dark:text-green-300')}
 
                             {incomeCategories.map((category) => (
-                                <tr key={category.category_id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <tr key={category.category_id} className="border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                     {renderCategoryNameCell(category)}
                                     {MONTHS.map((_, idx) => (
                                         <td key={idx} className="py-2 px-2 text-right">
@@ -437,16 +437,16 @@ export default function BudgetTable({
                             {renderAddCategoryRow('income', 'bg-green-100')}
 
                             {/* Gesamt Einnahmen */}
-                            {renderTotalRow('Gesamt/Monat', getMonthlyIncome, getYearlyIncomeTotal, 'bg-green-100', 'text-green-800')}
+                            {renderTotalRow('Gesamt/Monat', getMonthlyIncome, getYearlyIncomeTotal, 'bg-green-100', 'dark:bg-green-900/30', 'text-green-800', 'dark:text-green-400')}
 
                             {/* Spacer */}
                             <tr><td colSpan={14} className="py-2"></td></tr>
 
                             {/* FESTE AUSGABEN Section */}
-                            {renderSectionHeader('Feste Ausgaben', 'bg-amber-200 text-amber-900')}
+                            {renderSectionHeader('Feste Ausgaben', 'bg-amber-200 text-amber-900', 'dark:bg-amber-900/40 dark:text-amber-300')}
 
                             {fixedExpenseCategories.map((category) => (
-                                <tr key={category.category_id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <tr key={category.category_id} className="border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                     {renderCategoryNameCell(category)}
                                     {MONTHS.map((_, idx) => (
                                         <td key={idx} className="py-2 px-2 text-right">
@@ -465,10 +465,10 @@ export default function BudgetTable({
                             <tr><td colSpan={14} className="py-1"></td></tr>
 
                             {/* VARIABLE AUSGABEN Section */}
-                            {renderSectionHeader('Variable Ausgaben', 'bg-orange-200 text-orange-900')}
+                            {renderSectionHeader('Variable Ausgaben', 'bg-orange-200 text-orange-900', 'dark:bg-orange-900/40 dark:text-orange-300')}
 
                             {variableExpenseCategories.map((category) => (
-                                <tr key={category.category_id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <tr key={category.category_id} className="border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                     {renderCategoryNameCell(category)}
                                     {MONTHS.map((_, idx) => (
                                         <td key={idx} className="py-2 px-2 text-right">
@@ -484,7 +484,7 @@ export default function BudgetTable({
                             {renderAddCategoryRow('variable', 'bg-orange-100')}
 
                             {/* Gesamtausgaben */}
-                            {renderTotalRow('Gesamtausgaben', getMonthlyTotalExpense, getYearlyTotalExpense, 'bg-orange-100', 'text-orange-800')}
+                            {renderTotalRow('Gesamtausgaben', getMonthlyTotalExpense, getYearlyTotalExpense, 'bg-orange-100', 'dark:bg-orange-900/30', 'text-orange-800', 'dark:text-orange-400')}
 
                             {/* Spacer */}
                             <tr><td colSpan={14} className="py-2"></td></tr>

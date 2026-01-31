@@ -14,18 +14,20 @@ export default function SummaryCards({ summary, loading }) {
             value: summary?.yearlyTotals?.income || 0,
             icon: TrendingUp,
             gradient: 'from-green-500 to-emerald-600',
-            bgGradient: 'from-green-50 to-emerald-50',
-            textColor: 'text-green-700',
+            bgGradient: 'from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40',
+            textColor: 'text-green-700 dark:text-green-400',
             shadowColor: 'shadow-green-500/20',
+            borderColor: 'border-white/50 dark:border-green-900/30',
         },
         {
             title: 'Gesamtausgaben',
             value: summary?.yearlyTotals?.totalExpense || 0,
             icon: TrendingDown,
             gradient: 'from-orange-500 to-red-500',
-            bgGradient: 'from-orange-50 to-red-50',
-            textColor: 'text-orange-700',
+            bgGradient: 'from-orange-50 to-red-50 dark:from-orange-950/40 dark:to-red-950/40',
+            textColor: 'text-orange-700 dark:text-orange-400',
             shadowColor: 'shadow-orange-500/20',
+            borderColor: 'border-white/50 dark:border-orange-900/30',
         },
         {
             title: 'Jahressaldo',
@@ -35,14 +37,17 @@ export default function SummaryCards({ summary, loading }) {
                 ? 'from-blue-500 to-purple-600'
                 : 'from-red-500 to-pink-600',
             bgGradient: summary?.yearlyTotals?.balance >= 0
-                ? 'from-blue-50 to-purple-50'
-                : 'from-red-50 to-pink-50',
+                ? 'from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40'
+                : 'from-red-50 to-pink-50 dark:from-red-950/40 dark:to-pink-950/40',
             textColor: summary?.yearlyTotals?.balance >= 0
-                ? 'text-blue-700'
-                : 'text-red-700',
+                ? 'text-blue-700 dark:text-blue-400'
+                : 'text-red-700 dark:text-red-400',
             shadowColor: summary?.yearlyTotals?.balance >= 0
                 ? 'shadow-blue-500/20'
                 : 'shadow-red-500/20',
+            borderColor: summary?.yearlyTotals?.balance >= 0
+                ? 'border-white/50 dark:border-blue-900/30'
+                : 'border-white/50 dark:border-red-900/30',
         },
     ];
 
@@ -65,7 +70,7 @@ export default function SummaryCards({ summary, loading }) {
                 <div
                     key={card.title}
                     className={`glass rounded-2xl p-6 bg-gradient-to-br ${card.bgGradient} 
-                     border border-white/50 shadow-xl ${card.shadowColor} transition-transform hover:scale-[1.02]`}
+                     border ${card.borderColor} shadow-xl ${card.shadowColor} transition-transform hover:scale-[1.02]`}
                 >
                     <div className="flex items-center justify-between mb-3">
                         <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{card.title}</span>
