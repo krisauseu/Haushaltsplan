@@ -19,6 +19,17 @@ app.get('/', (req, res) => {
   res.send('Haushaltsplan Backend is running. Please access the frontend at http://localhost:5173');
 });
 
+// Helper function to decode JWT and extract user_id
+const decodeJWT = (token) => {
+  try {
+    const base64Payload = token.split('.')[1];
+    const payload = Buffer.from(base64Payload, 'base64').toString('utf-8');
+    return JSON.parse(payload);
+  } catch (e) {
+    return null;
+  }
+};
+
 // Auth Middleware & Supabase Client Factory
 app.use((req, res, next) => {
   // Get token from header
@@ -34,9 +45,14 @@ app.use((req, res, next) => {
         }
       }
     });
+
+    // Extract user_id from token for RLS
+    const decoded = decodeJWT(token);
+    req.userId = decoded?.sub; // 'sub' contains the user UUID in Supabase JWTs
   } else {
     // Fallback to anonymous client (will likely be blocked by RLS)
     req.supabase = createClient(supabaseUrl, supabaseKey);
+    req.userId = null;
   }
   next();
 });
@@ -77,10 +93,21 @@ app.get('/api/categories', async (req, res) => {
 // Create new category
 app.post('/api/categories', async (req, res) => {
   const { name, type, is_fixed, display_order } = req.body;
+
+  if (!req.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
   try {
     const { data, error } = await req.supabase
       .from('categories')
-      .insert([{ name, type, is_fixed: is_fixed ?? true, display_order: display_order ?? 0 }])
+      .insert([{
+        name,
+        type,
+        is_fixed: is_fixed ?? true,
+        display_order: display_order ?? 0,
+        user_id: req.userId
+      }])
       .select()
       .single();
 
@@ -188,11 +215,16 @@ app.get('/api/values/:year', async (req, res) => {
 // Update a single monthly value
 app.put('/api/values', async (req, res) => {
   const { category_id, year, month, amount } = req.body;
+
+  if (!req.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
   try {
     const { data, error } = await req.supabase
       .from('monthly_values')
       .upsert(
-        { category_id, year, month, amount },
+        { category_id, year, month, amount, user_id: req.userId },
         { onConflict: 'category_id,year,month' }
       )
       .select()
@@ -209,18 +241,23 @@ app.put('/api/values', async (req, res) => {
 // Batch update monthly values
 app.put('/api/values/batch', async (req, res) => {
   const { updates } = req.body;
+
+  if (!req.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
   try {
+    const upsertData = updates.map(u => ({
+      category_id: u.category_id,
+      year: u.year,
+      month: u.month,
+      amount: u.amount,
+      user_id: req.userId
+    }));
+
     const { data, error } = await req.supabase
       .from('monthly_values')
-      .upsert(
-        updates.map(u => ({
-          category_id: u.category_id,
-          year: u.year,
-          month: u.month,
-          amount: u.amount
-        })),
-        { onConflict: 'category_id,year,month' }
-      )
+      .upsert(upsertData, { onConflict: 'category_id,year,month' })
       .select();
 
     if (error) throw error;

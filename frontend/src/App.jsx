@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import TabNav from './components/TabNav';
 import SummaryCards from './components/SummaryCards';
@@ -9,7 +9,6 @@ import { useAuth } from './context/AuthContext';
 import {
     getValuesByYear,
     getSummary,
-    updateValue,
     batchUpdateValues,
     createCategory,
     updateCategory,
@@ -31,6 +30,9 @@ function App() {
     const [autoFillFlash, setAutoFillFlash] = useState(null); // { categoryId, timestamp }
     const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'analysis'
     const [isExporting, setIsExporting] = useState(false);
+
+    // Ref for debounce timer - MUST be before any early returns
+    const autoSaveTimerRef = useRef(null);
 
     const fetchData = useCallback(async () => {
         if (!user) return;
@@ -55,6 +57,52 @@ function App() {
         fetchData();
     }, [fetchData]);
 
+    // Auto-save effect: debounced save after 2 seconds of inactivity
+    // MUST be before any early returns to comply with Rules of Hooks
+    useEffect(() => {
+        // Only run auto-save when user is logged in and there are pending changes
+        if (!user || Object.keys(pendingChanges).length === 0) return;
+
+        // Clear existing timer
+        if (autoSaveTimerRef.current) {
+            clearTimeout(autoSaveTimerRef.current);
+        }
+
+        // Set new timer for auto-save
+        autoSaveTimerRef.current = setTimeout(async () => {
+            const changesToSave = { ...pendingChanges };
+            if (Object.keys(changesToSave).length === 0) return;
+
+            setSaving(true);
+            try {
+                const updates = Object.values(changesToSave);
+                await batchUpdateValues(updates);
+
+                setPendingChanges(prev => {
+                    const remaining = { ...prev };
+                    Object.keys(changesToSave).forEach(key => delete remaining[key]);
+                    return remaining;
+                });
+
+                const summaryData = await getSummary(year);
+                setSummary(summaryData);
+            } catch (err) {
+                console.error('Auto-save error:', err);
+                setError('Fehler beim Speichern. Bitte versuchen Sie es erneut.');
+            } finally {
+                setSaving(false);
+            }
+        }, 2000);
+
+        // Cleanup on unmount or when pendingChanges updates
+        return () => {
+            if (autoSaveTimerRef.current) {
+                clearTimeout(autoSaveTimerRef.current);
+            }
+        };
+    }, [pendingChanges, user, year]);
+
+    // Early returns AFTER all hooks
     if (authLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950">
@@ -109,18 +157,21 @@ function App() {
     };
 
     const handleSave = async () => {
-        if (Object.keys(pendingChanges).length === 0) return;
+        // Clear any pending auto-save timer
+        if (autoSaveTimerRef.current) {
+            clearTimeout(autoSaveTimerRef.current);
+        }
+
+        const changesToSave = { ...pendingChanges };
+        if (Object.keys(changesToSave).length === 0) {
+            setEditMode(false);
+            return;
+        }
 
         setSaving(true);
         try {
-            const updates = Object.values(pendingChanges);
-
-            // Save all changes
-            for (const update of updates) {
-                await updateValue(update.category_id, update.year, update.month, update.amount);
-            }
-
-            // Refresh data and summary
+            const updates = Object.values(changesToSave);
+            await batchUpdateValues(updates);
             await fetchData();
             setPendingChanges({});
             setEditMode(false);
@@ -133,6 +184,11 @@ function App() {
     };
 
     const handleCancel = () => {
+        // Clear any pending auto-save timer
+        if (autoSaveTimerRef.current) {
+            clearTimeout(autoSaveTimerRef.current);
+        }
+
         if (Object.keys(pendingChanges).length > 0) {
             if (!confirm('Alle ungespeicherten Änderungen werden verworfen. Fortfahren?')) {
                 return;
@@ -307,12 +363,18 @@ function App() {
                 {/* Footer Info */}
                 <div className="mt-6 text-center text-sm text-slate-400 dark:text-slate-500">
                     <p>
-                        {editMode && Object.keys(pendingChanges).length > 0 && (
-                            <span className="text-amber-600 dark:text-amber-400 font-medium">
-                                {Object.keys(pendingChanges).length} ungespeicherte Änderung(en) •{' '}
+                        {saving && (
+                            <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                <Loader2 className="w-3 h-3 inline animate-spin mr-1" />
+                                Speichere...{' '}
                             </span>
                         )}
-                        Haushaltsplan {year} • Daten werden in PostgreSQL gespeichert
+                        {editMode && Object.keys(pendingChanges).length > 0 && !saving && (
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">
+                                {Object.keys(pendingChanges).length} Änderung(en) werden in 2s automatisch gespeichert •{' '}
+                            </span>
+                        )}
+                        Haushaltsplan {year} • Daten werden in Supabase gespeichert
                     </p>
                 </div>
             </div>
