@@ -39,13 +39,20 @@ git clone https://github.com/krisauseu/Haushaltsplan.git
 cd Haushaltsplan
 ```
 
-### 2. Supabase & Auth einrichten
+### 2. Supabase einrichten
 
-1. Erstelle ein Projekt auf [supabase.com](https://supabase.com)
-2. Führe das Init-Schema aus `backend/db/init.sql` im Supabase SQL-Editor aus
-3. Führe das Auth-Migrations-Skript aus `backend/db/migration_add_auth_rls.sql` aus (User Tabellen & RLS)
-4. Kopiere deine Supabase-Credentials
+1. Erstelle ein kostenloses Projekt auf [supabase.com](https://supabase.com)
+2. Gehe zu **SQL Editor** und führe das Setup-Skript aus:
+   ```
+   backend/db/setup.sql
+   ```
+   Das Skript erstellt automatisch:
+   - ✅ Alle Tabellen (`categories`, `monthly_values`)
+   - ✅ Row Level Security (jeder sieht nur seine Daten)
+   - ✅ Starter-Kategorien für neue Benutzer (via Auth Trigger)
 
+3. Gehe zu **Authentication > Providers** und aktiviere "Email"
+4. Kopiere deine Supabase-Credentials aus **Settings > API**
 
 ### 3. Umgebungsvariablen konfigurieren
 
