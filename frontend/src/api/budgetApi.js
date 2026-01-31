@@ -41,17 +41,19 @@ export const deleteCategory = async (id) => {
 };
 
 // Monthly Values API
-export const getValuesByYear = async (year) => {
-    const response = await api.get(`/values/${year}`);
+export const getValuesByYear = async (year, scenarioId = null) => {
+    const params = scenarioId ? { scenarioId } : {};
+    const response = await api.get(`/values/${year}`, { params });
     return response.data;
 };
 
-export const updateValue = async (category_id, year, month, amount) => {
+export const updateValue = async (category_id, year, month, amount, scenario_id = null) => {
     const response = await api.put('/values', {
         category_id,
         year,
         month,
         amount,
+        scenario_id,
     });
     return response.data;
 };
@@ -62,8 +64,9 @@ export const batchUpdateValues = async (updates) => {
 };
 
 // Summary API
-export const getSummary = async (year) => {
-    const response = await api.get(`/summary/${year}`);
+export const getSummary = async (year, scenarioId = null) => {
+    const params = scenarioId ? { scenarioId } : {};
+    const response = await api.get(`/summary/${year}`, { params });
     return response.data;
 };
 
@@ -74,3 +77,35 @@ export const checkHealth = async () => {
 };
 
 export default api;
+
+// =====================================================
+// SCENARIOS API
+// =====================================================
+
+// Get all scenarios for a year
+export const getScenarios = async (year) => {
+    const response = await api.get(`/scenarios/${year}`);
+    return response.data;
+};
+
+// Create new scenario
+export const createScenario = async (name, year, copyFromLive = false) => {
+    const response = await api.post('/scenarios', {
+        name,
+        year,
+        copyFromLive,
+    });
+    return response.data;
+};
+
+// Update scenario name
+export const updateScenario = async (id, name) => {
+    const response = await api.patch(`/scenarios/${id}`, { name });
+    return response.data;
+};
+
+// Delete scenario
+export const deleteScenario = async (id) => {
+    const response = await api.delete(`/scenarios/${id}`);
+    return response.data;
+};

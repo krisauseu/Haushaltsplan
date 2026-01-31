@@ -171,8 +171,10 @@ app.delete('/api/categories/:id', async (req, res) => {
 // Get all values for a year
 app.get('/api/values/:year', async (req, res) => {
   const { year } = req.params;
+  const { scenarioId } = req.query;
+
   try {
-    // Get all categories with their monthly values for the year
+    // Get all categories
     const { data: categories, error: catError } = await req.supabase
       .from('categories')
       .select('*')
@@ -181,10 +183,18 @@ app.get('/api/values/:year', async (req, res) => {
 
     if (catError) throw catError;
 
-    const { data: values, error: valError } = await req.supabase
-      .from('monthly_values')
+    // Route to correct table based on scenarioId
+    const valuesTable = scenarioId ? 'scenario_values' : 'monthly_values';
+    let valuesQuery = req.supabase
+      .from(valuesTable)
       .select('*')
       .eq('year', parseInt(year));
+
+    if (scenarioId) {
+      valuesQuery = valuesQuery.eq('scenario_id', scenarioId);
+    }
+
+    const { data: values, error: valError } = await valuesQuery;
 
     if (valError) throw valError;
 
@@ -214,19 +224,27 @@ app.get('/api/values/:year', async (req, res) => {
 
 // Update a single monthly value
 app.put('/api/values', async (req, res) => {
-  const { category_id, year, month, amount } = req.body;
+  const { category_id, year, month, amount, scenario_id } = req.body;
 
   if (!req.userId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
   try {
+    // Route to correct table
+    const valuesTable = scenario_id ? 'scenario_values' : 'monthly_values';
+    const upsertData = scenario_id
+      ? { category_id, year, month, amount, user_id: req.userId, scenario_id }
+      : { category_id, year, month, amount, user_id: req.userId };
+
+    // Conflict columns differ per table
+    const conflictColumns = scenario_id
+      ? 'scenario_id,category_id,year,month'
+      : 'category_id,year,month';
+
     const { data, error } = await req.supabase
-      .from('monthly_values')
-      .upsert(
-        { category_id, year, month, amount, user_id: req.userId },
-        { onConflict: 'category_id,year,month' }
-      )
+      .from(valuesTable)
+      .upsert(upsertData, { onConflict: conflictColumns })
       .select()
       .single();
 
@@ -247,17 +265,35 @@ app.put('/api/values/batch', async (req, res) => {
   }
 
   try {
-    const upsertData = updates.map(u => ({
-      category_id: u.category_id,
-      year: u.year,
-      month: u.month,
-      amount: u.amount,
-      user_id: req.userId
-    }));
+    // Check if this is for scenario or live data
+    const scenario_id = updates[0]?.scenario_id || null;
+    const valuesTable = scenario_id ? 'scenario_values' : 'monthly_values';
+
+    const upsertData = updates.map(u => scenario_id
+      ? {
+        category_id: u.category_id,
+        year: u.year,
+        month: u.month,
+        amount: u.amount,
+        user_id: req.userId,
+        scenario_id: u.scenario_id
+      }
+      : {
+        category_id: u.category_id,
+        year: u.year,
+        month: u.month,
+        amount: u.amount,
+        user_id: req.userId
+      }
+    );
+
+    const conflictColumns = scenario_id
+      ? 'scenario_id,category_id,year,month'
+      : 'category_id,year,month';
 
     const { data, error } = await req.supabase
-      .from('monthly_values')
-      .upsert(upsertData, { onConflict: 'category_id,year,month' })
+      .from(valuesTable)
+      .upsert(upsertData, { onConflict: conflictColumns })
       .select();
 
     if (error) throw error;
@@ -275,6 +311,8 @@ app.put('/api/values/batch', async (req, res) => {
 // Get yearly summary with calculations
 app.get('/api/summary/:year', async (req, res) => {
   const { year } = req.params;
+  const { scenarioId } = req.query;
+
   try {
     // Get all categories
     const { data: categories, error: catError } = await req.supabase
@@ -283,11 +321,18 @@ app.get('/api/summary/:year', async (req, res) => {
 
     if (catError) throw catError;
 
-    // Get all monthly values for the year
-    const { data: values, error: valError } = await req.supabase
-      .from('monthly_values')
+    // Route to correct table
+    const valuesTable = scenarioId ? 'scenario_values' : 'monthly_values';
+    let valuesQuery = req.supabase
+      .from(valuesTable)
       .select('*')
       .eq('year', parseInt(year));
+
+    if (scenarioId) {
+      valuesQuery = valuesQuery.eq('scenario_id', scenarioId);
+    }
+
+    const { data: values, error: valError } = await valuesQuery;
 
     if (valError) throw valError;
 
@@ -347,6 +392,140 @@ app.get('/api/summary/:year', async (req, res) => {
   } catch (error) {
     console.error('Error fetching summary:', error);
     res.status(500).json({ error: 'Failed to fetch summary' });
+  }
+});
+
+// =====================================================
+// SCENARIOS ENDPOINTS
+// =====================================================
+
+// Get all scenarios for a user and year
+app.get('/api/scenarios/:year', async (req, res) => {
+  const { year } = req.params;
+
+  if (!req.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { data, error } = await req.supabase
+      .from('scenarios')
+      .select('*')
+      .eq('year', parseInt(year))
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching scenarios:', error);
+    res.status(500).json({ error: 'Failed to fetch scenarios' });
+  }
+});
+
+// Create a new scenario
+app.post('/api/scenarios', async (req, res) => {
+  const { name, year, copyFromLive } = req.body;
+
+  if (!req.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  if (!name || !year) {
+    return res.status(400).json({ error: 'Name and year are required' });
+  }
+
+  try {
+    // Create scenario
+    const { data: scenario, error: scenarioError } = await req.supabase
+      .from('scenarios')
+      .insert([{
+        name,
+        year: parseInt(year),
+        user_id: req.userId
+      }])
+      .select()
+      .single();
+
+    if (scenarioError) throw scenarioError;
+
+    // Copy from live if requested
+    if (copyFromLive) {
+      const { data: liveValues, error: liveError } = await req.supabase
+        .from('monthly_values')
+        .select('*')
+        .eq('year', parseInt(year));
+
+      if (liveError) throw liveError;
+
+      if (liveValues && liveValues.length > 0) {
+        const scenarioValues = liveValues.map(v => ({
+          category_id: v.category_id,
+          year: v.year,
+          month: v.month,
+          amount: v.amount,
+          user_id: req.userId,
+          scenario_id: scenario.id
+        }));
+
+        const { error: insertError } = await req.supabase
+          .from('scenario_values')
+          .insert(scenarioValues);
+
+        if (insertError) throw insertError;
+      }
+    }
+
+    res.status(201).json(scenario);
+  } catch (error) {
+    console.error('Error creating scenario:', error);
+    res.status(500).json({ error: 'Failed to create scenario' });
+  }
+});
+
+// Update a scenario
+app.patch('/api/scenarios/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+
+  if (!req.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { data, error } = await req.supabase
+      .from('scenarios')
+      .update({ name })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    console.error('Error updating scenario:', error);
+    res.status(500).json({ error: 'Failed to update scenario' });
+  }
+});
+
+// Delete a scenario
+app.delete('/api/scenarios/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (!req.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  try {
+    const { error } = await req.supabase
+      .from('scenarios')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting scenario:', error);
+    res.status(500).json({ error: 'Failed to delete scenario' });
   }
 });
 

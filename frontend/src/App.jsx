@@ -4,6 +4,7 @@ import TabNav from './components/TabNav';
 import SummaryCards from './components/SummaryCards';
 import BudgetTable from './components/BudgetTable';
 import AnalysisPage from './components/AnalysisPage';
+import PlanningView from './components/PlanningView';
 import LoginPage from './components/LoginPage';
 import { useAuth } from './context/AuthContext';
 import {
@@ -349,7 +350,7 @@ function App() {
                             />
                         </div>
                     </>
-                ) : (
+                ) : activeTab === 'analysis' ? (
                     <div data-pdf-analysis>
                         <AnalysisPage
                             data={data}
@@ -358,7 +359,13 @@ function App() {
                             loading={loading}
                         />
                     </div>
-                )}
+                ) : activeTab === 'planning' ? (
+                    <PlanningView
+                        year={year}
+                        onAddCategory={handleAddCategory}
+                        onUpdateCategory={handleUpdateCategory}
+                    />
+                ) : null}
 
                 {/* Footer Info */}
                 <div className="mt-6 text-center text-sm text-slate-400 dark:text-slate-500">

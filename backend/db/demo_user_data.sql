@@ -17,14 +17,10 @@
 -- Setze hier die UUID des Demo-Benutzers ein:
 DO $$
 DECLARE
-    demo_user_id UUID := '<DEMO_USER_UUID>'; -- ← HIER UUID EINSETZEN!
+    demo_user_id UUID := 'DEMO_USER_UUID'; -- Demo-User UUID
     cat_id INTEGER;
     current_year INTEGER := EXTRACT(YEAR FROM CURRENT_DATE)::INTEGER;
 BEGIN
-    -- Prüfe ob UUID gesetzt wurde
-    IF demo_user_id = '<DEMO_USER_UUID>' THEN
-        RAISE EXCEPTION 'Bitte ersetze <DEMO_USER_UUID> mit der echten UUID des Demo-Benutzers!';
-    END IF;
 
     -- =====================================================
     -- EINNAHMEN (Income)

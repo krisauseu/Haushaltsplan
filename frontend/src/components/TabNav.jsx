@@ -1,9 +1,10 @@
-import { TableProperties, BarChart3 } from 'lucide-react';
+import { TableProperties, BarChart3, Lightbulb } from 'lucide-react';
 
 export default function TabNav({ activeTab, onTabChange, disabled }) {
     const tabs = [
         { id: 'overview', label: 'Übersicht', icon: TableProperties },
         { id: 'analysis', label: 'Analyse', icon: BarChart3 },
+        { id: 'planning', label: 'Planung', icon: Lightbulb },
     ];
 
     return (

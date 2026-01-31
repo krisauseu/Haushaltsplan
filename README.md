@@ -7,6 +7,7 @@ Eine moderne Full-Stack Web-Anwendung zur Verwaltung von Haushaltsbudgets mit Su
 - 📊 **Übersichtliche Tabelle** mit allen 12 Monaten + Jahressumme
 - ✏️ **Edit-Mode** zum schnellen Ändern von Beträgen
 - ⚡ **Auto-Fill** - Wert auf alle 12 Monate mit einem Klick übertragen
+- 💡 **Szenario-Planung** - Verschiedene Budget-Szenarien erstellen, vergleichen und verwalten ohne Live-Daten zu beeinflussen
 - 📈 **Analyse-Dashboard** mit interaktiven Charts:
   - Doughnut-Chart für Ausgaben-Verteilung pro Kategorie
   - Trend-Chart (Einnahmen vs. Ausgaben im Jahresverlauf)
@@ -50,12 +51,13 @@ cd Haushaltsplan
 ### 2. Supabase einrichten
 
 1. Erstelle ein kostenloses Projekt auf [supabase.com](https://supabase.com)
-2. Gehe zu **SQL Editor** und führe das Setup-Skript aus:
+2. Gehe zu **SQL Editor** und führe die Setup-Skripte aus:
    ```
    backend/db/setup.sql
+   backend/db/migration_scenarios_v2.sql
    ```
-   Das Skript erstellt automatisch:
-   - ✅ Alle Tabellen (`categories`, `monthly_values`)
+   Die Skripte erstellen automatisch:
+   - ✅ Alle Tabellen (`categories`, `monthly_values`, `scenarios`, `scenario_values`)
    - ✅ Row Level Security (jeder sieht nur seine Daten)
    - ✅ Starter-Kategorien für neue Benutzer (via Auth Trigger)
 
@@ -110,10 +112,14 @@ docker-compose logs -f
 | POST | `/api/categories` | Neue Kategorie |
 | PUT | `/api/categories/:id` | Kategorie bearbeiten |
 | DELETE | `/api/categories/:id` | Kategorie löschen |
-| GET | `/api/values/:year` | Monatswerte für Jahr |
+| GET | `/api/values/:year?scenarioId=...` | Monatswerte für Jahr (Live oder Szenario) |
 | PUT | `/api/values` | Einzelwert speichern |
 | PUT | `/api/values/batch` | Mehrere Werte speichern |
-| GET | `/api/summary/:year` | Jahresübersicht |
+| GET | `/api/summary/:year?scenarioId=...` | Jahresübersicht (Live oder Szenario) |
+| GET | `/api/scenarios/:year` | Alle Szenarien für Jahr |
+| POST | `/api/scenarios` | Neues Szenario erstellen |
+| PATCH | `/api/scenarios/:id` | Szenario umbenennen |
+| DELETE | `/api/scenarios/:id` | Szenario löschen |
 
 ## Entwicklung
 
